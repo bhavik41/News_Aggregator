@@ -1,0 +1,40 @@
+# ...existing code...
+services:
+  # Selenium Chrome service for running automated browser tests
+  selenium:
+    image: selenium/standalone-chrome:latest
+    container_name: selenium_chrome
+    ports:
+      - "4444:4444" # Selenium WebDriver port
+      - "7900:7900" # VNC viewer port for debugging (optional)
+    shm_size: 2g # Prevents Chrome from crashing due to shared memory limits
+    environment:
+      - SE_NODE_MAX_SESSIONS=1 # One browser session at a time
+      - SE_NODE_SESSION_TIMEOUT=300 # Timeout for browser session (seconds)
+      - SE_SCREEN_WIDTH=1920 # Browser screen width
+      - SE_SCREEN_HEIGHT=1080 # Browser screen height
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/wd/hub/status"] # CheckSelenium health
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Java web crawler container
+  crawler:
+    build:
+      context: . # Use current directory for build
+      # University of Windsor 4
+      # 110204126 MAC Advanced Computing Concepts
+      dockerfile: Dockerfile # Dockerfile path
+    container_name: java_crawler
+    depends_on:
+      selenium:
+        condition: service_healthy # Wait until Selenium is ready
+    volumes:
+      - ./data:/app/data # Mount local 'data' folder for output storage
+    working_dir: /app # Set working directory inside container
+    environment:
+      - SELENIUM_HOST=selenium # Hostname of Selenium container
+      - SELENIUM_PORT=4444
+# ...existing code...
