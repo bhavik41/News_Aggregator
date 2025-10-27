@@ -64,6 +64,8 @@
       <scope>test</scope>
     </dependency>
     -->
+
+
   </dependencies>
 
   <build>
@@ -83,7 +85,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.example.Crawler</mainClass>
+              <mainClass>com.example.Main</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>

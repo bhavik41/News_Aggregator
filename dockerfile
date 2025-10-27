@@ -5,4 +5,4 @@ COPY src ./src
 # Build the application
 RUN mvn clean package
 # Run the application
-CMD ["java","-cp", "target/selenium-docker-crawl-java-1.0-SNAPSHOT-jar-with-dependencies.jar", "com.example.Crawler"]
+CMD ["java","-cp", "target/selenium-docker-crawl-java-1.0-SNAPSHOT-jar-with-dependencies.jar", "com.example.Main"]
