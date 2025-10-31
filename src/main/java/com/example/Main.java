@@ -1,19 +1,17 @@
 package com.example;
 
-import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.remote.RemoteWebDriver;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import java.io.*;
-import java.net.URL;
 import java.time.Duration;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class Main {
     private static final String OUTPUT_CSV = "all_news_data.csv";
     private static final boolean USE_REMOTE_DRIVER = true;
-    private static final String REMOTE_DRIVER_URL = "http://selenium:4444";
+    private static final String REMOTE_DRIVER_URL = "http://localhost:4444";
     private static final String LOCAL_CHROME_DRIVER_PATH = "C:\\Path\\To\\chromedriver.exe";
     
     public static void main(String[] args) {
