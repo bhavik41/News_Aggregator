@@ -35,9 +35,8 @@ class BBCCrawler {
             Utils.sleep(2000);
             
             List<WebElement> sections = driver.findElements(By.cssSelector("[data-testid*='section-outer']"));
-            int sectionCount = 0;
-            for (WebElement section : sections) {
-                if (sectionCount >= 5) break; // Limit to 5 sections on main page
+
+            for (WebElement section : sections) {// Limit to 5 sections on main page
                 String sectionTitle = getSectionTitle(section);
                 List<WebElement> articles = section.findElements(By.cssSelector("[data-testid*='-card']"));
                 int articleCount = 0;
@@ -46,7 +45,6 @@ class BBCCrawler {
                     extractArticle(sectionTitle, article, csvWriter, seenUrls);
                     articleCount++;
                 }
-                sectionCount++;
             }
         } catch (Exception e) {
             System.err.println("Error on BBC main page: " + e.getMessage());

@@ -24,8 +24,6 @@ services:
   crawler:
     build:
       context: . # Use current directory for build
-      # University of Windsor 4
-      # 110204126 MAC Advanced Computing Concepts
       dockerfile: Dockerfile # Dockerfile path
     container_name: java_crawler
     depends_on:

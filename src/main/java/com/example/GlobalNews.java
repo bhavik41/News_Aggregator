@@ -1,229 +1,304 @@
 package com.example;
 
 import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.openqa.selenium.PageLoadStrategy;
-
-import java.io.FileWriter;
-import java.io.IOException;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.util.*;
 
-public class GlobalNews  {
-
-    public static void main(String[] args) {
-        System.setProperty("webdriver.chrome.driver", "C:\\chrome\\chromedriver.exe");
-
-        ChromeOptions options = new ChromeOptions();
-        options.setPageLoadStrategy(PageLoadStrategy.EAGER);
-        options.addArguments("--start-maximized");
-        options.addArguments("--remote-allow-origins=*");
-        options.addArguments("--disable-notifications");
-        options.addArguments("--disable-popup-blocking");
-        options.addArguments("--disable-blink-features=AutomationControlled");
-        options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
-
-        WebDriver driver = new ChromeDriver(options);
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(25));
-
-        Set<String> uniqueLinks = new HashSet<>();
-        List<String[]> cleanRows = new ArrayList<>();
-
-        // ✅ Include ALL main sections of Global News
+public class GlobalNews {
+    private WebDriver driver;
+    private WebDriverWait wait;
+    private JavascriptExecutor js;
+    private static final String GLOBAL_NEWS_ROOT = "https://globalnews.ca";
+    private static final int MAX_PAGES_PER_SECTION = 2; // Reduced for speed
+    
+    public GlobalNews(WebDriver driver, WebDriverWait wait, JavascriptExecutor js) {
+        this.driver = driver;
+        this.wait = wait;
+        this.js = js;
+    }
+    
+    public void crawl(CSVWriter csvWriter, Set<String> seenUrls) {
         String[] sections = {
-                "", // Top stories (homepage)
-                "world",
-                "canada",
-                "politics",
-                "money",
-                "entertainment",
-                "sports",
-                "health",
-                "tech",
-                "trending",
-                "weather",
-                "lifestyle",
-                "videos"
+            "", // Top stories (homepage)
+            "world",
+            "canada",
+            "politics",
+            "money",
+            "entertainment",
+            "sports",
+            "health",
+            "tech",
+            "trending"
         };
-
+        
+        // Handle cookie popup once at the beginning
+        handleCookiePopup();
+        
+        for (String section : sections) {
+            String sectionName = section.isEmpty() ? "Top Stories" : capitalizeFirstLetter(section);
+            crawlSection(sectionName, section, csvWriter, seenUrls);
+        }
+    }
+    
+    private void handleCookiePopup() {
         try {
-            for (String section : sections) {
-                String sectionName = section.isEmpty() ? "Top Stories" : section.toUpperCase();
-
-                for (int page = 1; page <= 3; page++) {
-                    String url = section.isEmpty()
-                            ? "https://globalnews.ca/"
-                            : (page == 1
-                            ? "https://globalnews.ca/" + section + "/"
-                            : "https://globalnews.ca/" + section + "/page/" + page + "/");
-
-                    System.out.println("\n🌍 Scraping section: " + sectionName + " | Page " + page);
-                    driver.get(url);
-                    Thread.sleep(2000);
-
-                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
-
-                    // ✅ Handle cookie popup
-                    try {
-                        WebElement acceptBtn = wait.until(ExpectedConditions.presenceOfElementLocated(
-                                By.xpath("//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'accept')]")));
-                        acceptBtn.click();
-                        System.out.println("🍪 Popup accepted.");
-                    } catch (Exception e) {
-                        System.out.println("ℹ️ No popup on this page.");
-                    }
-
-                    // ✅ Wait for article elements
-                    wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("a.c-posts__inner")));
-
-                    // ✅ Scroll to load more content
-                    JavascriptExecutor js = (JavascriptExecutor) driver;
-                    for (int i = 0; i < 5; i++) {
-                        js.executeScript("window.scrollBy(0, 1000)");
-                        Thread.sleep(700);
-                    }
-
-                    List<WebElement> articles = driver.findElements(By.cssSelector("a.c-posts__inner"));
-                    for (WebElement article : articles) {
-                        try {
-                            String link = article.getAttribute("href");
-                            if (link == null || !link.contains("/news/") || uniqueLinks.contains(link))
-                                continue; // skip duplicates or invalid links
-
-                            String title = "N/A";
-                            String desc = "N/A";
-                            String time = "N/A";
-                            String category = "N/A";
-                            String img = "N/A";
-
-                            // 📰 Headline
-                            try {
-                                title = article.findElement(By.cssSelector(".c-posts__headlineText")).getText().trim();
-                            } catch (Exception ignored) {}
-
-                            // 🕒 Time
-                            try {
-                                List<WebElement> infos = article.findElements(By.cssSelector(".c-posts__info"));
-                                if (infos.size() > 1)
-                                    time = infos.get(1).getText().trim();
-
-                                time = cleanTime(time);
-                            } catch (Exception ignored) {}
-
-                            // 🏷️ Category
-                            try {
-                                category = article.findElement(By.cssSelector(".c-posts__info--highlight")).getText().trim();
-                                if (category.matches("\\d+(?:\\s\\d+)*") ||
-                                        category.equalsIgnoreCase("READ") ||
-                                        category.equalsIgnoreCase("WATCH"))
-                                    category = "N/A";
-                            } catch (Exception ignored) {}
-
-                            // 📝 Description
-                            try {
-                                WebElement descEl = article.findElement(By.cssSelector(".c-posts__excerpt"));
-                                desc = cleanDescription(descEl.getText());
-                            } catch (Exception ignored) {}
-
-                            // 🖼️ Image
-                            try {
-                                WebElement imgEl = article.findElement(By.cssSelector("img"));
-                                if (imgEl.getAttribute("src") != null && !imgEl.getAttribute("src").isEmpty())
-                                    img = imgEl.getAttribute("src");
-                                else if (imgEl.getAttribute("data-src") != null)
-                                    img = imgEl.getAttribute("data-src");
-                            } catch (Exception ignored) {}
-
-                            // ✅ Add only valid, unique, complete articles
-                            if (isValid(desc) && desc.length() >= 10 && isValid(time) && isValid(title)) {
-                                uniqueLinks.add(link);
-                                cleanRows.add(new String[]{
-                                        sectionName,
-                                        safe(title),
-                                        safe(desc),
-                                        safe(time),
-                                        safe(category),
-                                        safe(link),
-                                        safe(img)
-                                });
-                                System.out.println("✅ Added: " + title);
-                            }
-
-                        } catch (Exception e) {
-                            System.out.println("⚠️ Skipped article: " + e.getMessage());
-                        }
-                    }
-
-                    System.out.println("✅ Done: " + sectionName + " Page " + page +
-                            " | Total so far: " + cleanRows.size());
+            driver.get(GLOBAL_NEWS_ROOT);
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            WebElement acceptBtn = shortWait.until(ExpectedConditions.presenceOfElementLocated(
+                By.xpath("//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'accept')]")));
+            acceptBtn.click();
+            System.out.println("🍪 Cookie popup accepted");
+            Utils.sleep(1000);
+        } catch (Exception e) {
+            System.out.println("ℹ️ No cookie popup found");
+        }
+    }
+    
+    private void crawlSection(String sectionName, String section, CSVWriter csvWriter, Set<String> seenUrls) {
+        try {
+            System.out.println("Crawling Global News: " + sectionName);
+            
+            for (int page = 1; page <= MAX_PAGES_PER_SECTION; page++) {
+                String url = buildUrl(section, page);
+                
+                if (!navigateToUrl(url)) {
+                    System.err.println("❌ Failed to load " + sectionName + " page " + page);
+                    continue;
+                }
+                
+                // Wait for articles to load
+                try {
+                    wait.until(ExpectedConditions.presenceOfElementLocated(
+                        By.cssSelector("a.c-posts__inner")));
+                } catch (Exception e) {
+                    System.err.println("⚠️ No articles found on " + sectionName + " page " + page);
+                    break; // No more pages
+                }
+                
+                // Scroll to load more content
+                scrollPage();
+                
+                // Extract articles
+                int count = extractArticles(sectionName, csvWriter, seenUrls);
+                System.out.println("  ✅ Page " + page + ": Extracted " + count + " articles");
+                
+                if (count == 0) {
+                    break; // No articles found, stop pagination
                 }
             }
-
-            // ✅ Save CSV file with date stamp
-            String filename = "global-news_clean_" + LocalDate.now() + ".csv";
-            saveToCSV(filename, cleanRows);
-            System.out.println("\n🎯 " + cleanRows.size() + " clean, unique articles saved in: " + filename);
-
+            
         } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            driver.quit();
+            System.err.println("❌ Error on Global News section " + sectionName + ": " + e.getMessage());
         }
     }
-
-    // ---------------- CSV WRITER ----------------
-    private static void saveToCSV(String filename, List<String[]> data) {
-        try (FileWriter writer = new FileWriter(filename)) {
-            writer.write("Section,Headline,Description,Time,Category,Link,ImageLink\n");
-            for (String[] row : data) {
-                List<String> cleaned = new ArrayList<>();
-                for (String cell : row) cleaned.add(clean(cell));
-                writer.write(String.join(",", cleaned) + "\n");
+    
+    private String buildUrl(String section, int page) {
+        if (section.isEmpty()) {
+            return GLOBAL_NEWS_ROOT + "/";
+        } else if (page == 1) {
+            return GLOBAL_NEWS_ROOT + "/" + section + "/";
+        } else {
+            return GLOBAL_NEWS_ROOT + "/" + section + "/page/" + page + "/";
+        }
+    }
+    
+    private boolean navigateToUrl(String url) {
+        try {
+            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(15));
+            driver.get(url);
+            Utils.sleep(1000);
+            return true;
+        } catch (TimeoutException e) {
+            System.err.println("⚠️ Page load timeout for " + url);
+            try {
+                js.executeScript("window.stop();");
+                return true;
+            } catch (Exception ex) {
+                return false;
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("⚠️ Navigation error: " + e.getMessage());
+            return false;
         }
     }
-
-    // ---------------- HELPERS ----------------
-    private static boolean isValid(String s) {
-        return s != null && !s.trim().isEmpty() &&
-                !s.equalsIgnoreCase("N/A") &&
-                !s.equalsIgnoreCase("null");
+    
+    private void scrollPage() {
+        try {
+            for (int i = 0; i < 3; i++) {
+                js.executeScript("window.scrollBy(0, 1000)");
+                Utils.sleep(10);
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Scroll error: " + e.getMessage());
+        }
     }
-
-    private static String safe(String s) {
-        return (s == null || s.trim().isEmpty()) ? "N/A" : s.trim();
+    
+    private int extractArticles(String sectionName, CSVWriter csvWriter, Set<String> seenUrls) {
+        int count = 0;
+        
+        try {
+            List<WebElement> articles = driver.findElements(By.cssSelector("a.c-posts__inner"));
+            
+            for (WebElement article : articles) {
+                try {
+                    String link = article.getAttribute("href");
+                    
+                    // Validate link
+                    if (link == null || !link.contains("/news/") || seenUrls.contains(link)) {
+                        continue;
+                    }
+                    
+                    // Extract article data
+                    String title = extractTitle(article);
+                    String desc = extractDescription(article);
+                    String time = extractTime(article);
+                    String category = extractCategory(article);
+                    String img = extractImage(article);
+                    
+                    // Validate required fields
+                    if (isValidArticle(title, desc, time)) {
+                        seenUrls.add(link);
+                        csvWriter.writeRow(
+                            "Global News",
+                            sectionName,
+                            title,
+                            desc,
+                            time,
+                            category,
+                            link,
+                            img
+                        );
+                        count++;
+                        System.out.println("  ✓ " + title.substring(0, Math.min(60, title.length())));
+                    }
+                    
+                } catch (StaleElementReferenceException e) {
+                    continue; // Element no longer in DOM
+                } catch (Exception e) {
+                    System.err.println("  ⚠️ Skipped article: " + e.getMessage());
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error extracting articles: " + e.getMessage());
+        }
+        
+        return count;
     }
-
-    private static String clean(String text) {
-        if (text == null) return "\"\"";
-        text = text.replace("\"", "'")
-                .replace(",", " ")
-                .replace("\n", " ")
-                .replace("\r", " ")
-                .trim();
-        return "\"" + text + "\"";
+    
+    private String extractTitle(WebElement article) {
+        try {
+            return article.findElement(By.cssSelector(".c-posts__headlineText"))
+                         .getText().trim();
+        } catch (Exception e) {
+            return "";
+        }
     }
-
-    private static String cleanDescription(String desc) {
-        if (desc == null) return "N/A";
+    
+    private String extractDescription(WebElement article) {
+        try {
+            WebElement descEl = article.findElement(By.cssSelector(".c-posts__excerpt"));
+            String desc = descEl.getText().trim();
+            return cleanDescription(desc);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+    
+    private String extractTime(WebElement article) {
+        try {
+            List<WebElement> infos = article.findElements(By.cssSelector(".c-posts__info"));
+            if (infos.size() > 1) {
+                String time = infos.get(1).getText().trim();
+                return cleanTime(time);
+            }
+        } catch (Exception e) {
+            // Time not found
+        }
+        return "";
+    }
+    
+    private String extractCategory(WebElement article) {
+        try {
+            String category = article.findElement(By.cssSelector(".c-posts__info--highlight"))
+                                    .getText().trim();
+            
+            // Filter out invalid categories
+            if (category.matches("\\d+(?:\\s\\d+)*") ||
+                category.equalsIgnoreCase("READ") ||
+                category.equalsIgnoreCase("WATCH")) {
+                return "";
+            }
+            return category;
+        } catch (Exception e) {
+            return "";
+        }
+    }
+    
+    private String extractImage(WebElement article) {
+        try {
+            WebElement imgEl = article.findElement(By.cssSelector("img"));
+            String src = imgEl.getAttribute("src");
+            if (src != null && !src.isEmpty()) {
+                return src;
+            }
+            src = imgEl.getAttribute("data-src");
+            if (src != null && !src.isEmpty()) {
+                return src;
+            }
+        } catch (Exception e) {
+            // Image not found
+        }
+        return "";
+    }
+    
+    private boolean isValidArticle(String title, String desc, String time) {
+        return isValid(title) && 
+               isValid(desc) && 
+               desc.length() >= 10 && 
+               isValid(time);
+    }
+    
+    private boolean isValid(String s) {
+        return s != null && 
+               !s.trim().isEmpty() &&
+               !s.equalsIgnoreCase("N/A") &&
+               !s.equalsIgnoreCase("null");
+    }
+    
+    private String cleanDescription(String desc) {
+        if (desc == null || desc.isEmpty()) return "";
+        
         desc = desc.trim();
-        if (desc.equalsIgnoreCase("null") || desc.equalsIgnoreCase("N/A") || desc.isEmpty()) return "N/A";
+        if (desc.equalsIgnoreCase("null") || desc.equalsIgnoreCase("N/A")) {
+            return "";
+        }
+        
+        // Remove standalone numbers
         desc = desc.replaceAll("\\b\\d+\\b", "").trim();
+        // Normalize whitespace
         desc = desc.replaceAll("\\s{2,}", " ");
-        return desc.isEmpty() ? "N/A" : desc;
+        
+        return desc.isEmpty() ? "" : desc;
     }
-
-    private static String cleanTime(String time) {
-        if (time == null) return "N/A";
+    
+    private String cleanTime(String time) {
+        if (time == null || time.isEmpty()) return "";
+        
         time = time.trim();
-        if (time.isEmpty() || time.equalsIgnoreCase("N/A") || time.equalsIgnoreCase("null")) return "N/A";
-        if (time.matches("^[0-9]+$")) return "N/A";
+        if (time.equalsIgnoreCase("N/A") || 
+            time.equalsIgnoreCase("null") || 
+            time.matches("^[0-9]+$")) {
+            return "";
+        }
+        
         return time;
+    }
+    
+    private String capitalizeFirstLetter(String str) {
+        if (str == null || str.isEmpty()) return str;
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 }

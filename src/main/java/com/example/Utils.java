@@ -5,7 +5,11 @@ import org.openqa.selenium.By;
 
 class Utils {
     public static void sleep(long ms) {
-        try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
+        try { 
+            Thread.sleep(ms); 
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     public static String safeGetText(WebElement parent, String cssSelector) {

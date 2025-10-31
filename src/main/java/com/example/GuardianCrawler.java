@@ -24,21 +24,18 @@ class GuardianCrawler {
             driver.get("https://www.theguardian.com/international");
             System.out.println("Accessing The Guardian...");
             dismissCookies();
-            
+
+            // Only crawl 2 sections for speed
             String[][] sections = {
                 {"News", "https://www.theguardian.com/"},
-                {"Opinion", "https://www.theguardian.com/commentisfree"},
-                {"Sport", "https://www.theguardian.com/sport"},
-                {"Culture", "https://www.theguardian.com/culture"},
-                {"Lifestyle", "https://www.theguardian.com/lifeandstyle"},
                 {"Tech", "https://www.theguardian.com/technology"}
             };
-            
+
             for (String[] section : sections) {
                 crawlSection(section[0], section[1], csvWriter, seenUrls);
             }
         } catch (Exception e) {
-            System.err.println("Error crawling Guardian: " + e.getMessage());
+            System.err.println("❌ Error crawling Guardian: " + e.getMessage());
         }
     }
     
@@ -88,21 +85,25 @@ class GuardianCrawler {
         try {
             driver.get(url);
             System.out.println("Crawling Guardian: " + sectionName);
-            Utils.sleep(2000);
-            
+            Utils.sleep(1000); // Reduced wait time
+
             List<WebElement> articles = wait.until(org.openqa.selenium.support.ui.ExpectedConditions.presenceOfAllElementsLocatedBy(
                 By.cssSelector("a[data-link-name='article']")));
-            
+
             int count = 0;
             for (WebElement article : articles) {
-                if (extractArticle(sectionName, article, csvWriter, seenUrls)) {
-                    count++;
+                try {
+                    if (extractArticle(sectionName, article, csvWriter, seenUrls)) {
+                        count++;
+                    }
+                    if (count >= 10) break; // Only 10 articles per section
+                } catch (Exception e) {
+                    System.err.println("⚠️ Skipping article in " + sectionName + ": " + e.getMessage());
                 }
-                if (count >= 50) break; // Limit to 50 articles per section
             }
-            System.out.println("Extracted " + count + " articles from " + sectionName);
+            System.out.println("✅ Extracted " + count + " articles from " + sectionName);
         } catch (Exception e) {
-            System.err.println("Error on Guardian section " + sectionName);
+            System.err.println("❌ Error on Guardian section " + sectionName + ": " + e.getMessage());
         }
     }
     
