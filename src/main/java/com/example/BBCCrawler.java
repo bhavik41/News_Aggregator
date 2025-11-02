@@ -41,7 +41,7 @@ class BBCCrawler {
                 List<WebElement> articles = section.findElements(By.cssSelector("[data-testid*='-card']"));
                 int articleCount = 0;
                 for (WebElement article : articles) {
-                    if (articleCount >= 20) break; // Limit to 20 articles per section
+                    if (articleCount >= 60) break; // Limit to 20 articles per section
                     extractArticle(sectionTitle, article, csvWriter, seenUrls);
                     articleCount++;
                 }

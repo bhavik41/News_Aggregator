@@ -41,7 +41,7 @@ class GuardianCrawler {
     
     private void dismissCookies() {
         try {
-            long timeout = 15000;
+            long timeout = 5000;
             long start = System.currentTimeMillis();
             
             while (System.currentTimeMillis() - start < timeout) {

@@ -11,7 +11,7 @@ public class GlobalNews {
     private WebDriverWait wait;
     private JavascriptExecutor js;
     private static final String GLOBAL_NEWS_ROOT = "https://globalnews.ca";
-    private static final int MAX_PAGES_PER_SECTION = 2; // Reduced for speed
+    private static final int MAX_PAGES_PER_SECTION = 5; // Reduced for speed
     
     public GlobalNews(WebDriver driver, WebDriverWait wait, JavascriptExecutor js) {
         this.driver = driver;

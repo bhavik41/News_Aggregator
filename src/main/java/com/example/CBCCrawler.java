@@ -18,7 +18,7 @@ class CBCCrawler {
     private WebDriverWait shortWait;
     private JavascriptExecutor js;
     private static final String CBC_ROOT = "https://www.cbc.ca";
-    private static final int MAX_ARTICLES = 5;
+    private static final int MAX_ARTICLES = 50;
     private static final int PAGE_LOAD_TIMEOUT = 2; // seconds
     
     public CBCCrawler(WebDriver driver, WebDriverWait wait, JavascriptExecutor js) {
