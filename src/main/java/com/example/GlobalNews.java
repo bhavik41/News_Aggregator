@@ -13,27 +13,20 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
 
-public class GlobalNews  {
-
-    public static void main(String[] args) {
-        System.setProperty("webdriver.chrome.driver", "C:\\chrome\\chromedriver.exe");
-
-        ChromeOptions options = new ChromeOptions();
-        options.setPageLoadStrategy(PageLoadStrategy.EAGER);
-        options.addArguments("--start-maximized");
-        options.addArguments("--remote-allow-origins=*");
-        options.addArguments("--disable-notifications");
-        options.addArguments("--disable-popup-blocking");
-        options.addArguments("--disable-blink-features=AutomationControlled");
-        options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
-
-        WebDriver driver = new ChromeDriver(options);
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(25));
-
-        Set<String> uniqueLinks = new HashSet<>();
-        List<String[]> cleanRows = new ArrayList<>();
-
-        // ✅ Include ALL main sections of Global News
+public class GlobalNews {
+    private WebDriver driver;
+    private WebDriverWait wait;
+    private JavascriptExecutor js;
+    private static final String GLOBAL_NEWS_ROOT = "https://globalnews.ca";
+    private static final int MAX_PAGES_PER_SECTION = 2; // Reduced for speed
+    
+    public GlobalNews(WebDriver driver, WebDriverWait wait, JavascriptExecutor js) {
+        this.driver = driver;
+        this.wait = wait;
+        this.js = js;
+    }
+    
+    public void crawl(CSVWriter csvWriter, Set<String> seenUrls) {
         String[] sections = {
                 "", // Top stories (homepage)
                 "world",

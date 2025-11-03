@@ -1,13 +1,14 @@
 package com.example;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.openqa.selenium.JavascriptExecutor;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Set;
-import org.openqa.selenium.By;
 
 class CBCCrawler {
     private WebDriver driver;
@@ -15,6 +16,7 @@ class CBCCrawler {
     private JavascriptExecutor js;
     private static final String CBC_ROOT = "https://www.cbc.ca";
     private static final int MAX_ARTICLES = 50;
+
     
     public CBCCrawler(WebDriver driver, WebDriverWait wait, JavascriptExecutor js) {
         this.driver = driver;
