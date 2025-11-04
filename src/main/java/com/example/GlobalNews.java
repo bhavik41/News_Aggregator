@@ -1,32 +1,45 @@
-package com.example;
-
-import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.openqa.selenium.PageLoadStrategy;
+package org.example;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class GlobalNews {
-    private WebDriver driver;
-    private WebDriverWait wait;
-    private JavascriptExecutor js;
-    private static final String GLOBAL_NEWS_ROOT = "https://globalnews.ca";
-    private static final int MAX_PAGES_PER_SECTION = 2; // Reduced for speed
-    
-    public GlobalNews(WebDriver driver, WebDriverWait wait, JavascriptExecutor js) {
-        this.driver = driver;
-        this.wait = wait;
-        this.js = js;
-    }
-    
-    public void crawl(CSVWriter csvWriter, Set<String> seenUrls) {
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.PageLoadStrategy;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+public class GlobalNews  {
+
+    public static void main(String[] args) {
+        System.setProperty("webdriver.chrome.driver", "C:\\chrome\\chromedriver.exe");
+
+        ChromeOptions options = new ChromeOptions();
+        options.setPageLoadStrategy(PageLoadStrategy.EAGER);
+        options.addArguments("--start-maximized");
+        options.addArguments("--remote-allow-origins=*");
+        options.addArguments("--disable-notifications");
+        options.addArguments("--disable-popup-blocking");
+        options.addArguments("--disable-blink-features=AutomationControlled");
+        options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
+
+        WebDriver driver = new ChromeDriver(options);
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(25));
+
+        Set<String> uniqueLinks = new HashSet<>();
+        List<String[]> cleanRows = new ArrayList<>();
+
+        // ✅ Include ALL main sections of Global News
         String[] sections = {
                 "", // Top stories (homepage)
                 "world",
