@@ -1,5 +1,4 @@
-package org.example;
-
+package com.example;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Duration;
