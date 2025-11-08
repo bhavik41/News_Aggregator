@@ -1,41 +1,31 @@
-package com.example;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.time.Duration;
-import java.time.LocalDate;
+package com.example.crawler;
+
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-public class GlobalNews  {
+import com.example.service.CSVWriter;
 
-    public static void main(String[] args) {
-        System.setProperty("webdriver.chrome.driver", "C:\\chrome\\chromedriver.exe");
+public class GlobalCrawler {
 
-        ChromeOptions options = new ChromeOptions();
-        options.setPageLoadStrategy(PageLoadStrategy.EAGER);
-        options.addArguments("--start-maximized");
-        options.addArguments("--remote-allow-origins=*");
-        options.addArguments("--disable-notifications");
-        options.addArguments("--disable-popup-blocking");
-        options.addArguments("--disable-blink-features=AutomationControlled");
-        options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
+    private final WebDriver driver;
+    private final WebDriverWait wait;
 
-        WebDriver driver = new ChromeDriver(options);
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(25));
+    // ✅ Constructor (matches what Main.java expects)
+    public GlobalCrawler(WebDriver driver, WebDriverWait wait) {
+        this.driver = driver;
+        this.wait = wait;
+    }
 
-        Set<String> uniqueLinks = new HashSet<>();
+    // ✅ Main crawling method (matches Main.java)
+    public void crawl(CSVWriter writer, Set<String> uniqueLinks) {
         List<String[]> cleanRows = new ArrayList<>();
 
         // ✅ Include ALL main sections of Global News
@@ -69,8 +59,6 @@ public class GlobalNews  {
                     System.out.println("\n🌍 Scraping section: " + sectionName + " | Page " + page);
                     driver.get(url);
                     Thread.sleep(2000);
-
-                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
                     // ✅ Handle cookie popup
                     try {
@@ -115,7 +103,6 @@ public class GlobalNews  {
                                 List<WebElement> infos = article.findElements(By.cssSelector(".c-posts__info"));
                                 if (infos.size() > 1)
                                     time = infos.get(1).getText().trim();
-
                                 time = cleanTime(time);
                             } catch (Exception ignored) {}
 
@@ -156,6 +143,11 @@ public class GlobalNews  {
                                         safe(img)
                                 });
                                 System.out.println("✅ Added: " + title);
+
+                                // ✅ Also write directly to CSV file
+                                synchronized (writer) {
+                                    writer.writeRow("GlobalNews", sectionName, title, desc, time, category, link, img);
+                                }
                             }
 
                         } catch (Exception e) {
@@ -168,28 +160,9 @@ public class GlobalNews  {
                 }
             }
 
-            // ✅ Save CSV file with date stamp
-            String filename = "global-news_clean_" + LocalDate.now() + ".csv";
-            saveToCSV(filename, cleanRows);
-            System.out.println("\n🎯 " + cleanRows.size() + " clean, unique articles saved in: " + filename);
+            System.out.println("\n🎯 " + cleanRows.size() + " clean, unique articles saved.");
 
         } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            driver.quit();
-        }
-    }
-
-    // ---------------- CSV WRITER ----------------
-    private static void saveToCSV(String filename, List<String[]> data) {
-        try (FileWriter writer = new FileWriter(filename)) {
-            writer.write("Section,Headline,Description,Time,Category,Link,ImageLink\n");
-            for (String[] row : data) {
-                List<String> cleaned = new ArrayList<>();
-                for (String cell : row) cleaned.add(clean(cell));
-                writer.write(String.join(",", cleaned) + "\n");
-            }
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -203,16 +176,6 @@ public class GlobalNews  {
 
     private static String safe(String s) {
         return (s == null || s.trim().isEmpty()) ? "N/A" : s.trim();
-    }
-
-    private static String clean(String text) {
-        if (text == null) return "\"\"";
-        text = text.replace("\"", "'")
-                .replace(",", " ")
-                .replace("\n", " ")
-                .replace("\r", " ")
-                .trim();
-        return "\"" + text + "\"";
     }
 
     private static String cleanDescription(String desc) {

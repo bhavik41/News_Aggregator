@@ -8,6 +8,14 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.example.crawler.BBCCrawler;
+import com.example.crawler.CBCCrawler;
+import com.example.crawler.GuardianCrawler;
+import com.example.crawler.GlobalCrawler;
+
+import com.example.crawler.NYTimesCrawler;
+import com.example.service.CSVWriter;
+
 public class Main {
     private static final String OUTPUT_CSV = "all_news_data.csv";
     private static final boolean USE_REMOTE_DRIVER = true;
@@ -39,6 +47,13 @@ public class Main {
                 bbcCrawler.crawl(csvWriter, seenUrls);
 
                 System.out.println("\n========================================");
+                System.out.println("Starting global Crawl");
+                System.out.println("========================================");
+                GlobalCrawler globalCrawler = new GlobalCrawler(driver, wait);
+                globalCrawler.crawl(csvWriter, seenUrls);
+
+
+                System.out.println("\n========================================");
                 System.out.println("Starting The Guardian Crawl");
                 System.out.println("========================================");
                 GuardianCrawler guardianCrawler = new GuardianCrawler(driver, wait, js);
@@ -49,6 +64,12 @@ public class Main {
                 System.out.println("========================================");
                 CBCCrawler cbcCrawler = new CBCCrawler(driver, wait, js);
                 cbcCrawler.crawl(csvWriter, seenUrls);
+
+                System.out.println("\n========================================");
+                System.out.println("Starting  NYTimes Crawl");
+                System.out.println("========================================");
+                NYTimesCrawler nyTimesCrawler = new NYTimesCrawler(driver, wait, js);
+                nyTimesCrawler.crawl(csvWriter, seenUrls);
 
                 System.out.println("\n========================================");
                 System.out.println("✅ Crawl Cycle #" + cycleCount + " completed!");

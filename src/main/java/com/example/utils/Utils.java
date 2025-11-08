@@ -1,9 +1,9 @@
-package com.example;
+package com.example.utils;
 
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 
-class Utils {
+public class Utils {
     public static void sleep(long ms) {
         try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
     }

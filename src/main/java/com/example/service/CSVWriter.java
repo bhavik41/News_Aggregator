@@ -1,12 +1,12 @@
-package com.example;
+package com.example.service;
 
-import java.io.PrintWriter;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 
-class CSVWriter {
-    private PrintWriter writer;
+public class CSVWriter {
+    public PrintWriter writer;
     
     public CSVWriter(String filename) throws IOException {
         writer = new PrintWriter(new BufferedWriter(new FileWriter(filename, false)));

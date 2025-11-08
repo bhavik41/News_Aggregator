@@ -1,4 +1,4 @@
-package com.example;
+package com.example.crawler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,10 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-class CBCCrawler {
+import com.example.service.CSVWriter;
+import com.example.utils.Utils;
+
+public class CBCCrawler {
     private WebDriver driver;
     private WebDriverWait wait;
     private JavascriptExecutor js;
