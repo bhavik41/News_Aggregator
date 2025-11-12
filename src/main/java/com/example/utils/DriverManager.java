@@ -1,12 +1,13 @@
-package com.example;
+package com.example.utils;
 
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import java.net.URL;
 
-class DriverManager {
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
+
+public class DriverManager {
     public static WebDriver initializeDriver(boolean useRemote, String remoteUrl, String localPath) throws Exception {
         if (useRemote) {
             ChromeOptions options = new ChromeOptions();
