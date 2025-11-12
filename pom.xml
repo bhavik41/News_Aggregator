@@ -57,6 +57,13 @@
       <version>4.11.0</version>
     </dependency>
 
+  <!--dotenv-java for environment variables-->
+  <dependency>
+      <groupId>io.github.cdimascio</groupId>
+      <artifactId>dotenv-java</artifactId>
+      <version>3.0.0</version>
+    </dependency>
+
     <!-- ✅ Jackson JSON support -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -90,6 +97,17 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <version>${spring.boot.version}</version>
       </plugin>
+
+      <!-- ✅ Exec Maven Plugin (for running Java classes manually) -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <mainClass>com.example.db.TestEnv</mainClass>
+        </configuration>
+      </plugin>
+
 
       <!-- ✅ Compiler settings -->
       <plugin>
