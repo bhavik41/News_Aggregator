@@ -10,11 +10,15 @@
 
 FROM eclipse-temurin:17-jdk
 
+# Install Maven
+RUN apt-get update && apt-get install -y maven
+
 WORKDIR /app
 
 COPY . .
 
-RUN chmod +x mvnw
-RUN ./mvnw clean package -DskipTests
+# Build using Maven
+RUN mvn clean package -DskipTests
 
-CMD ["java", "-jar", "target/*SNAPSHOT.jar"]
+# Run the built JAR
+CMD ["java", "-jar", "target/*.jar"]
