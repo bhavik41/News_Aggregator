@@ -10,15 +10,16 @@
 
 FROM eclipse-temurin:17-jdk
 
-# Install Maven
 RUN apt-get update && apt-get install -y maven
 
 WORKDIR /app
-
 COPY . .
 
-# Build using Maven
-RUN mvn clean package -DskipTests
+RUN mvn -version
+RUN mvn clean package -DskipTests || true
 
-# Run the built JAR
-CMD ["java", "-jar", "target/*.jar"]
+# Print target folder so we can see if jar exists
+RUN ls -R .
+
+CMD ["sh", "-c", "ls target && java -jar target/*.jar"]
+
