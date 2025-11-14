@@ -1,4 +1,4 @@
-package com.example.scheduler;
+package com.example.service;
 
 import java.time.Duration;
 import java.util.HashSet;
@@ -15,8 +15,6 @@ import com.example.crawler.CBCCrawler;
 import com.example.crawler.GlobalCrawler;
 import com.example.crawler.GuardianCrawler;
 import com.example.crawler.NYTimesCrawler;
-import com.example.service.CSVWriter;
-import com.example.service.CSVtoMongoUploader;
 import com.example.utils.DriverManager;
 
 @Service
