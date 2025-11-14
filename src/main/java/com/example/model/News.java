@@ -1,9 +1,7 @@
 package com.example.model;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "news")
 public class News {
 
     @Id
@@ -16,6 +14,8 @@ public class News {
     private String imageLink;   // ImageLink
     private String description; // Description
     private String category;    // Category
+
+    private double score;       // Word frequency score for ranking
 
     // Getters and setters
     public String getId() { return id; }
@@ -44,4 +44,7 @@ public class News {
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+
+    public double getScore() { return score; }
+    public void setScore(double score) { this.score = score; }
 }

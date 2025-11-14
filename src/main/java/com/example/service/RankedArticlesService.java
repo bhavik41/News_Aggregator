@@ -1,12 +1,14 @@
 package com.example.service;
 
-import com.example.model.News;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import com.example.model.News;
 
 @Service
 public class RankedArticlesService {
@@ -18,17 +20,39 @@ public class RankedArticlesService {
         List<News> allNews = newsService.getAllNews();
 
         if (allNews != null) {
-            // Sort by title length descending
-            Collections.sort(allNews, new Comparator<News>() {
-                @Override
-                public int compare(News n1, News n2) {
-                    String t1 = n1.getTitle() != null ? n1.getTitle() : "";
-                    String t2 = n2.getTitle() != null ? n2.getTitle() : "";
-                    return t2.length() - t1.length(); // descending
-                }
-            });
+
+            // Compute word frequency score for each article
+            for (News news : allNews) {
+                String content = "";
+                if (news.getDescription() != null) content += news.getDescription();
+                if (news.getTitle() != null) content += " " + news.getTitle(); // include title
+                news.setScore(calculateWordFrequencyScore(content));
+            }
+
+            // Sort descending by score
+            Collections.sort(allNews, (n1, n2) -> Double.compare(n2.getScore(), n1.getScore()));
         }
 
         return allNews;
+    }
+
+    // Helper method: calculate total frequency score of words
+    private double calculateWordFrequencyScore(String text) {
+        if (text.isEmpty()) return 0;
+
+        String[] words = text.toLowerCase().split("\\W+"); // split by non-word characters
+        Map<String, Integer> freq = new HashMap<>();
+
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                freq.put(word, freq.getOrDefault(word, 0) + 1);
+            }
+        }
+
+        // Total frequency (sum of all word occurrences)
+        int total = 0;
+        for (int count : freq.values()) total += count;
+
+        return total;
     }
 }
