@@ -86,6 +86,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.languagetool</groupId>
+      <artifactId>language-en</artifactId>
+      <version>6.4</version>
+    </dependency>
+
+
   </dependencies>
 
   <build>

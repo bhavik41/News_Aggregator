@@ -8,22 +8,19 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pattern-detection")
-@CrossOrigin("*")
+@RequestMapping("/api/pattern")
 public class PatternDetectionController {
 
     @Autowired
-    private PatternDetectionService patternDetectionService;
+    private PatternDetectionService patternService;
 
-    /**
-     * Example request:
-     * GET /api/pattern-detection?regex=Trump
-     *
-     * @param regex the regex pattern to detect
-     * @return list of news articles matching the pattern
-     */
-    @GetMapping
-    public List<News> detectPattern(@RequestParam String regex) {
-        return patternDetectionService.detectPattern(regex);
+    @GetMapping("/test")
+    public String test() {
+        return "Pattern detection API is working!";
+    }
+
+    @PostMapping("/detect")
+    public List<News> detect(@RequestBody String regex) {
+        return patternService.detectPattern(regex);
     }
 }

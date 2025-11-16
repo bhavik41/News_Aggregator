@@ -8,18 +8,18 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/autocomplete")
-@CrossOrigin("*")
 public class AutoCompleteController {
 
     @Autowired
-    private AutoCompleteService autoCompleteService;
+    private AutoCompleteService autoService;
 
-    // Example: /api/autocomplete?prefix=the&limit=10
-    @GetMapping
-    public List<String> getAutoComplete(
-            @RequestParam String prefix,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
-        return autoCompleteService.getSuggestions(prefix, limit);
+    @GetMapping("/test")
+    public String test() {
+        return "AutoComplete API is working!";
+    }
+
+    @PostMapping("/suggest")
+    public List<String> suggest(@RequestBody String prefix) {
+        return autoService.getSuggestions(prefix, 10);
     }
 }

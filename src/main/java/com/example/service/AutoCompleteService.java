@@ -13,45 +13,55 @@ public class AutoCompleteService {
     private NewsService newsService;
 
     public List<String> getSuggestions(String prefix, int limit) {
+
         try {
-            if (prefix == null || prefix.isEmpty()) return Collections.emptyList();
-
-            prefix = prefix.toLowerCase();
-            Set<String> wordsSet = new HashSet<>();
-
-            List<News> allNews = newsService.getAllNews();
-
-            if (allNews == null) {
-                System.out.println("News list is null!");
+            // Empty prefix → return nothing
+            if (prefix == null || prefix.trim().isEmpty()) {
                 return Collections.emptyList();
             }
 
-            for (News news : allNews) {
-                String title = news.getTitle() != null ? news.getTitle() : "";
-                String description = news.getDescription() != null ? news.getDescription() : "";
-                String content = title + " " + description;
+            prefix = prefix.toLowerCase();
 
-                if (!content.isEmpty()) {
-                    String[] words = content.toLowerCase().split("\\W+");
+            // Load news
+            List<News> allNews = newsService.getAllNews();
+            if (allNews == null || allNews.isEmpty()) {
+                System.out.println("No news available!");
+                return Collections.emptyList();
+            }
+
+            Set<String> suggestions = new HashSet<>();
+
+            // Extract words from news
+            for (News news : allNews) {
+                String title = (news.getTitle() != null) ? news.getTitle() : "";
+                String description = (news.getDescription() != null) ? news.getDescription() : "";
+                String combined = (title + " " + description).toLowerCase();
+
+                if (!combined.isEmpty()) {
+                    // \W+ splits on ANY non-word character
+                    String[] words = combined.split("\\W+");
+
                     for (String word : words) {
                         if (!word.isEmpty() && word.startsWith(prefix)) {
-                            wordsSet.add(word);
+                            suggestions.add(word);
                         }
                     }
                 }
             }
 
-            List<String> suggestions = new ArrayList<>(wordsSet);
-            Collections.sort(suggestions);
+            // Convert to list and sort
+            List<String> sortedList = new ArrayList<>(suggestions);
+            Collections.sort(sortedList);
 
-            if (suggestions.size() > limit) {
-                return suggestions.subList(0, limit);
+            // Apply limit
+            if (sortedList.size() > limit) {
+                return sortedList.subList(0, limit);
             }
 
-            return suggestions;
+            return sortedList;
 
         } catch (Exception e) {
-            System.out.println("Error in AutoCompleteService: " + e.getMessage());
+            System.out.println("AutoCompleteService ERROR → " + e.getMessage());
             e.printStackTrace();
             return Collections.emptyList();
         }
