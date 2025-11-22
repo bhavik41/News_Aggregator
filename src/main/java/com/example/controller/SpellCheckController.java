@@ -4,7 +4,7 @@ import com.example.service.SpellCheckService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -14,12 +14,12 @@ public class SpellCheckController {
     private SpellCheckService spellCheckService;
 
     @PostMapping("/spellcheck")
-    public List<String> checkSpelling(@RequestBody String text) {
+    public Map<String, Object> checkSpelling(@RequestBody String text) {
         return spellCheckService.checkSpelling(text);
     }
 
     @GetMapping("/spellcheck/test")
-    public String testSpellCheck() {
-        return "SpellCheck API is working!";
+    public Map<String, String> testSpellCheck() {
+        return Map.of("status", "success", "message", "SpellCheck API is working!");
     }
 }

@@ -1,7 +1,6 @@
 package com.example.service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.springframework.stereotype.Service;
 
@@ -12,13 +11,17 @@ public class SpellCheckService {
             "hello", "world", "java", "spring", "crawler", "news", "project", "data"
     );
 
-    public List<String> checkSpelling(String inputText) {
+    public Map<String, Object> checkSpelling(String inputText) {
+
+        Map<String, Object> result = new LinkedHashMap<>();
         List<String> wrongWords = new ArrayList<>();
 
         try {
 
             if (inputText == null || inputText.trim().isEmpty()) {
-                throw new IllegalArgumentException("Input text cannot be empty");
+                result.put("status", "error");
+                result.put("message", "Input text cannot be empty");
+                return result;
             }
 
             String[] words = inputText.toLowerCase().split("\\s+");
@@ -29,10 +32,16 @@ public class SpellCheckService {
                 }
             }
 
+            result.put("status", "success");
+            result.put("input_text", inputText);
+            result.put("wrong_words", wrongWords);
+            result.put("count", wrongWords.size());
+
         } catch (Exception e) {
-            System.out.println("SpellCheckService ERROR → " + e.getMessage());
+            result.put("status", "error");
+            result.put("message", e.getMessage());
         }
 
-        return wrongWords;
+        return result;
     }
 }
