@@ -29,7 +29,7 @@ public class MongoDBConnection {
                 
                 System.out.println("✅ Connecting to MongoDB Atlas...");
                 mongoClient = MongoClients.create(mongoUri);
-                database = mongoClient.getDatabase("news_aggregator"); // Your database name
+                database = mongoClient.getDatabase("newsAggregatorDB"); // Your database name
                 System.out.println("✅ Successfully connected to MongoDB Atlas!");
                 
             } catch (Exception e) {
