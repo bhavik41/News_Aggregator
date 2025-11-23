@@ -8,11 +8,7 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import com.example.crawler.BBCCrawler;
-import com.example.crawler.CBCCrawler;
-import com.example.crawler.GlobalCrawler;
 import com.example.crawler.GuardianCrawler;
-import com.example.crawler.NYTimesCrawler;
 import com.example.service.CSVWriter;
 import com.example.service.CSVtoMongoUploader;
 import com.example.utils.DriverManager;
@@ -21,7 +17,7 @@ public class Main {
     private static final String OUTPUT_CSV = "all_news_data.csv";
     private static final boolean USE_REMOTE_DRIVER = true;
     private static final String REMOTE_DRIVER_URL = "http://localhost:4444";
-    private static final String LOCAL_CHROME_DRIVER_PATH = "C:\\Users\\hp\\Downloads\\chromedriver-win64\\chromedriver-win64\\chromedriver.exe";
+    private static final String LOCAL_CHROME_DRIVER_PATH = "C:\\Users\\Dell\\Downloads\\chromedriver-win64 (1)\\chromedriver-win64\\chromedriver.exe";
 
     public static void main(String[] args) {
         WebDriver driver = null;
