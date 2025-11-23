@@ -25,7 +25,7 @@ public class CrawlerService {
     private static final String REMOTE_DRIVER_URL = "http://localhost:4444";
     private static final String LOCAL_CHROME_DRIVER_PATH = "C:\\Users\\hp\\Downloads\\chromedriver-win64\\chromedriver.exe";
 
-    @Scheduled(fixedRate = 21600000) // every 6 hour
+    @Scheduled(fixedRate = 43200000) // every 12 hours
     public void runCrawlers() {
         WebDriver driver = null;
         CSVWriter csvWriter = null;
