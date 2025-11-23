@@ -4,34 +4,44 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
+import io.github.cdimascio.dotenv.Dotenv;
+
 public class MongoDBConnection {
+
     private static MongoClient mongoClient;
     private static MongoDatabase database;
 
     public static MongoDatabase getDatabase() {
         if (database == null) {
             try {
-                // Try to get MongoDB URI from environment variable first
-                String mongoUri = System.getenv("MONGODB_URI");
-                
-                // Fallback to MONGO_URI if MONGODB_URI doesn't exist
+                // Load .env file if available
+                Dotenv dotenv = Dotenv.configure()
+                        .ignoreIfMissing() // Won't crash if .env missing
+                        .load();
+
+                // Try environment variable first
+                String mongoUri = System.getenv("MONGO_URI");
+
+                // Fallback to .env file
                 if (mongoUri == null || mongoUri.isEmpty()) {
-                    mongoUri = System.getenv("MONGO_URI");
+                    mongoUri = dotenv.get("MONGO_URI");
                 }
-                
-                // If still null, throw a clear error
+
+                // Throw error if still missing
                 if (mongoUri == null || mongoUri.isEmpty()) {
                     throw new IllegalStateException(
-                        "MongoDB connection string not found. " +
-                        "Please set MONGODB_URI or MONGO_URI environment variable."
+                            "MongoDB connection string not found. Please set MONGO_URI in environment variables or in the .env file."
                     );
                 }
-                
+
+                System.out.println("Loaded MONGO_URI from environment or .env");
+
+                // Connect to MongoDB
                 System.out.println("✅ Connecting to MongoDB Atlas...");
                 mongoClient = MongoClients.create(mongoUri);
-                database = mongoClient.getDatabase("newsAggregatorDB"); // Your database name
+                database = mongoClient.getDatabase("newsAggregatorDB");
                 System.out.println("✅ Successfully connected to MongoDB Atlas!");
-                
+
             } catch (Exception e) {
                 System.err.println("❌ Failed to connect to MongoDB Atlas:");
                 e.printStackTrace();
