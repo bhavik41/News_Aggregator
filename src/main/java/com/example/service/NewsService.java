@@ -1,10 +1,7 @@
 package com.example.service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.bson.Document;
 import org.springframework.stereotype.Service;
@@ -22,16 +19,6 @@ public class NewsService {
         MongoDatabase db = MongoDBConnection.getDatabase();
         MongoCollection<Document> collection = db.getCollection("articles");
 
-        // Allowed categories (case-insensitive)
-        Set<String> allowedCategories = new HashSet<>(Arrays.asList(
-            "Top stories",
-            "Trending",
-            "Politics",
-            "World",
-            "Technology",
-            "News" // include current documents
-        ));
-
         List<News> newsList = new ArrayList<>();
 
         try (MongoCursor<Document> cursor = collection.find().iterator()) {
@@ -39,32 +26,33 @@ public class NewsService {
                 Document doc = cursor.next();
                 News news = new News();
 
-                // Clean all string fields
-                String id = doc.getObjectId("_id").toHexString();
-                String title = trimQuotes(doc.getString("Headline"));
-                String source = trimQuotes(doc.getString("Source"));
-                String link = trimQuotes(doc.getString("Link"));
-                String date = trimQuotes(doc.getString("Time"));
-                String section = trimQuotes(doc.getString("Section"));
-                String imageLink = trimQuotes(doc.getString("ImageLink"));
-                String description = trimQuotes(doc.getString("Description"));
-                String category = trimQuotes(doc.getString("Category"));
-
-                // Only add if category matches allowed categories (case-insensitive)
-                if (category != null && allowedCategories.stream().anyMatch(c -> c.equalsIgnoreCase(category))) {
-                    news.setId(id);
-                    news.setTitle(title);
-                    news.setSource(source);
-                    news.setLink(link);
-                    news.setDate(date);
-                    news.setSection(section);
-                    news.setImageLink(imageLink);
-                    news.setDescription(description);
-                    news.setCategory(category);
-
-                    newsList.add(news);
+                // _id can be ObjectId or String depending on how data was inserted
+                Object idObj = doc.get("_id");
+                if (idObj != null) {
+                    try {
+                        // prefer ObjectId hex string
+                        if (idObj instanceof org.bson.types.ObjectId) {
+                            news.setId(((org.bson.types.ObjectId) idObj).toHexString());
+                        } else {
+                            news.setId(idObj.toString());
+                        }
+                    } catch (Exception ex) {
+                        news.setId(idObj.toString());
+                    }
                 }
+
+                news.setTitle(trimQuotes(safeGetString(doc, "Headline")));
+                news.setSource(trimQuotes(safeGetString(doc, "Source")));
+                news.setLink(trimQuotes(safeGetString(doc, "Link")));
+                news.setDate(trimQuotes(safeGetString(doc, "Time")));
+                news.setSection(trimQuotes(safeGetString(doc, "Section")));
+                news.setImageLink(trimQuotes(safeGetString(doc, "ImageLink")));
+                news.setDescription(trimQuotes(safeGetString(doc, "Description")));
+                news.setCategory(trimQuotes(safeGetString(doc, "Category")));
+
+                newsList.add(news);
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -72,9 +60,21 @@ public class NewsService {
         return newsList;
     }
 
-    // Helper: remove starting/ending quotes and trim whitespace
+    private String safeGetString(Document doc, String key) {
+        try {
+            Object o = doc.get(key);
+            if (o == null) return null;
+            if (o instanceof String) return (String) o;
+            return o.toString();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // Helper: Remove starting/ending quotes and trim whitespace
     private String trimQuotes(String value) {
         if (value == null) return null;
         return value.replaceAll("^\"|\"$", "").trim();
     }
+
 }

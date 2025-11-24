@@ -107,6 +107,119 @@ public class BBCCrawler {
             return "Top Stories";
         }
     }
+
+    /**
+     * Crawl only the provided section titles from the main BBC News page.
+     * Allowed titles are matched case-insensitively and by substring.
+     */
+    public void crawlForHomeSections(CSVWriter csvWriter, Set<String> seenUrls, List<String> allowedSectionTitles) {
+        try {
+            driver.get("https://www.bbc.com/news");
+            System.out.println("Crawling BBC News main page for home sections...");
+            handleCookies();
+            wait.until(org.openqa.selenium.support.ui.ExpectedConditions.presenceOfElementLocated(
+                By.cssSelector("[data-testid*='section-outer']")));
+            Utils.sleep(1500);
+
+            List<WebElement> sections = driver.findElements(By.cssSelector("[data-testid*='section-outer']"));
+            for (WebElement section : sections) {
+                String sectionTitle = getSectionTitle(section);
+                String norm = sectionTitle == null ? "" : sectionTitle.toLowerCase();
+                boolean allowed = false;
+                for (String a : allowedSectionTitles) {
+                    if (a != null && !a.isEmpty() && norm.contains(a.toLowerCase())) {
+                        allowed = true;
+                        break;
+                    }
+                }
+                if (!allowed) continue;
+
+                System.out.println("★ Crawling section: " + sectionTitle);
+                List<WebElement> articles = section.findElements(By.cssSelector("[data-testid*='-card'], article, [data-testid*='card']"));
+                int articleCount = 0;
+                for (WebElement article : articles) {
+                    if (articleCount >= 80) break; // safety limit
+                    extractArticle(sectionTitle, article, csvWriter, seenUrls);
+                    articleCount++;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error crawling BBC home sections: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Crawl the home sections and return a list of MongoDB Documents for direct upload.
+     */
+    public java.util.List<org.bson.Document> crawlForHomeSectionsToDocs(Set<String> seenUrls, java.util.List<String> allowedSectionTitles) {
+        java.util.List<org.bson.Document> docs = new java.util.ArrayList<>();
+        try {
+            driver.get("https://www.bbc.com/news");
+            System.out.println("Crawling BBC News main page for home sections (to docs)...");
+            handleCookies();
+            wait.until(org.openqa.selenium.support.ui.ExpectedConditions.presenceOfElementLocated(
+                By.cssSelector("[data-testid*='section-outer']")));
+            Utils.sleep(1500);
+
+            java.util.List<WebElement> sections = driver.findElements(By.cssSelector("[data-testid*='section-outer']"));
+            for (WebElement section : sections) {
+                String sectionTitle = getSectionTitle(section);
+                String norm = sectionTitle == null ? "" : sectionTitle.toLowerCase();
+                boolean allowed = false;
+                for (String a : allowedSectionTitles) {
+                    if (a != null && !a.isEmpty() && norm.contains(a.toLowerCase())) {
+                        allowed = true;
+                        break;
+                    }
+                }
+                if (!allowed) continue;
+
+                System.out.println("★ Crawling section: " + sectionTitle);
+                java.util.List<WebElement> articles = section.findElements(By.cssSelector("[data-testid*='-card'], article, [data-testid*='card']"));
+                int articleCount = 0;
+                for (WebElement article : articles) {
+                    if (articleCount >= 80) break; // safety limit
+                    org.bson.Document d = extractArticleAsDocument(sectionTitle, article, seenUrls);
+                    if (d != null) docs.add(d);
+                    articleCount++;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error crawling BBC home sections to docs: " + e.getMessage());
+        }
+        return docs;
+    }
+
+    private org.bson.Document extractArticleAsDocument(String section, WebElement article, Set<String> seenUrls) {
+        try {
+            String title = Utils.safeGetText(article, "[data-testid='card-headline'], h3, h2");
+            String description = Utils.safeGetText(article, "[data-testid='card-description'], p");
+            String time = Utils.safeGetText(article, "[data-testid='card-metadata-lastupdated']");
+            String category = Utils.safeGetText(article, "[data-testid='card-metadata-tag']");
+            String link = Utils.safeGetAttribute(article, "a, [data-testid='internal-link']", "href");
+            String imageLink = extractImage(article);
+
+            if (!link.isEmpty() && !link.startsWith("http")) {
+                link = "https://www.bbc.com" + link;
+            }
+
+            if (!title.isEmpty() && !link.isEmpty() && !seenUrls.contains(link)) {
+                seenUrls.add(link);
+                org.bson.Document doc = new org.bson.Document("Source", "BBC")
+                        .append("Section", section)
+                        .append("Headline", title)
+                        .append("Description", description)
+                        .append("Time", time)
+                        .append("Category", category)
+                        .append("Link", link)
+                        .append("ImageLink", imageLink);
+                return doc;
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return null;
+    }
     
     private void extractArticle(String section, WebElement article, CSVWriter csvWriter, Set<String> seenUrls) {
         try {

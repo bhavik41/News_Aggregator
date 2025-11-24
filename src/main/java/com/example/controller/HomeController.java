@@ -1,29 +1,27 @@
 package com.example.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.http.ResponseEntity;
 
 import com.example.model.News;
-import com.example.service.NewsService;
+import com.example.service.HomeService;
 
 @RestController
-@RequestMapping("/api/news")
+@RequestMapping("/api/home")
 @CrossOrigin("*")
-public class NewsController {
+public class HomeController {
 
     @Autowired
-    private NewsService newsService;
+    private HomeService homeService;
 
     @GetMapping
-    public ResponseEntity<List<News>> getAllNews() {
-        List<News> all = newsService.getAllNews();
-        System.out.println("GET /api/news -> returning " + (all == null ? "null" : all.size() + " items"));
-        return ResponseEntity.ok(all);
+    public Map<String, List<News>> getHomeNews() {
+        return homeService.getNewsGroupedBySection();
     }
 }

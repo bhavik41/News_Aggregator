@@ -45,32 +45,32 @@ public class CrawlerService {
         System.out.println("========================================");
         
         try {
-            System.out.println("🔧 Initializing Selenium WebDriver...");
-            System.out.println("   - Using remote driver: " + USE_REMOTE_DRIVER);
-            System.out.println("   - Remote URL: " + getRemoteDriverUrl());
+            // System.out.println("🔧 Initializing Selenium WebDriver...");
+            // System.out.println("   - Using remote driver: " + USE_REMOTE_DRIVER);
+            // System.out.println("   - Remote URL: " + getRemoteDriverUrl());
             
-            driver = DriverManager.initializeDriver(USE_REMOTE_DRIVER, getRemoteDriverUrl(), LOCAL_CHROME_DRIVER_PATH);
-            System.out.println("✅ Selenium WebDriver initialized successfully");
+            // driver = DriverManager.initializeDriver(USE_REMOTE_DRIVER, getRemoteDriverUrl(), LOCAL_CHROME_DRIVER_PATH);
+            // System.out.println("✅ Selenium WebDriver initialized successfully");
             
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+            // WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
-            System.out.println("📄 Initializing CSV writer: " + OUTPUT_CSV);
-            csvWriter = new CSVWriter(OUTPUT_CSV);
-            Set<String> seenUrls = new HashSet<>();
+            // System.out.println("📄 Initializing CSV writer: " + OUTPUT_CSV);
+            // csvWriter = new CSVWriter(OUTPUT_CSV);
+            // Set<String> seenUrls = new HashSet<>();
 
-            System.out.println("🌐 Starting BBC news crawl...");
-            new BBCCrawler(driver, wait).crawl(csvWriter, seenUrls);
+            // System.out.println("🌐 Starting BBC news crawl...");
+            // new BBCCrawler(driver, wait).crawl(csvWriter, seenUrls);
 
-            System.out.println("✅ BBC News crawl completed");
-            System.out.println("📊 Total articles collected: " + seenUrls.size());
-            System.out.println("💾 Output saved to: " + OUTPUT_CSV);
+            // System.out.println("✅ BBC News crawl completed");
+            // System.out.println("📊 Total articles collected: " + seenUrls.size());
+            // System.out.println("💾 Output saved to: " + OUTPUT_CSV);
 
-            // Upload CSV data to MongoDB
-            System.out.println("📤 Uploading data to MongoDB...");
-            // FIX: Pass seenUrls (populated from crawl) instead of empty HashSet
-            CSVtoMongoUploader.uploadCSV(OUTPUT_CSV, seenUrls);
-            System.out.println("✅ BBC news data uploaded to MongoDB successfully!");
-            System.out.println("========================================\n");
+            // // Upload CSV data to MongoDB
+            // System.out.println("📤 Uploading data to MongoDB...");
+            // // FIX: Pass seenUrls (populated from crawl) instead of empty HashSet
+            // CSVtoMongoUploader.uploadCSV(OUTPUT_CSV, seenUrls);
+            // System.out.println("✅ BBC news data uploaded to MongoDB successfully!");
+            // System.out.println("========================================\n");
 
         } catch (Exception e) {
             System.err.println("\n❌ ERROR DURING BBC CRAWLING:");
