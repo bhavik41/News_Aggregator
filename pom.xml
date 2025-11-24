@@ -9,7 +9,7 @@
   <groupId>com.example</groupId>
   <artifactId>news-aggregator</artifactId>
   <version>1.0-SNAPSHOT</version>
-  <!-- <packaging>jar</packaging> -->
+   <packaging>jar</packaging> 
 
   <name>News Aggregator</name>
   <description>Java-based News Aggregator with MongoDB and REST API</description>
