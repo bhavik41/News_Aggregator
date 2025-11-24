@@ -18,7 +18,7 @@ COPY . .
 RUN mvn -version
 RUN mvn clean package -DskipTests || true
 
-Print target folder so we can see if jar exists
+#Print target folder so we can see if jar exists
 RUN ls -R .
 
 CMD ["sh", "-c", "ls target && java -jar target/*.jar"]
