@@ -20,8 +20,15 @@ import com.example.utils.DriverManager;
 public class Main {
     private static final String OUTPUT_CSV = "all_news_data.csv";
     private static final boolean USE_REMOTE_DRIVER = true;
-    private static final String REMOTE_DRIVER_URL = "http://localhost:4444";
     private static final String LOCAL_CHROME_DRIVER_PATH = "C:\\Users\\hp\\Downloads\\chromedriver-win64\\chromedriver-win64\\chromedriver.exe";
+
+    private static String getRemoteDriverUrl() {
+        String host = System.getenv("SELENIUM_HOST");
+        if (host == null || host.isEmpty()) host = "localhost";
+        String port = System.getenv("SELENIUM_PORT");
+        if (port == null || port.isEmpty()) port = "4444";
+        return "http://" + host + ":" + port;
+    }
 
     public static void main(String[] args) {
         WebDriver driver = null;
@@ -29,7 +36,7 @@ public class Main {
 
         try {
             // Initialize WebDriver
-            driver = DriverManager.initializeDriver(USE_REMOTE_DRIVER, REMOTE_DRIVER_URL, LOCAL_CHROME_DRIVER_PATH);
+            driver = DriverManager.initializeDriver(USE_REMOTE_DRIVER, getRemoteDriverUrl(), LOCAL_CHROME_DRIVER_PATH);
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
             JavascriptExecutor js = (JavascriptExecutor) driver;
 
@@ -40,14 +47,14 @@ public class Main {
             System.out.println("Starting Crawlers");
             System.out.println("========================================");
 
-                //BBCCrawler bbcCrawler = new BBCCrawler(driver, wait);
-                //bbcCrawler.crawl(csvWriter, seenUrls);
+            BBCCrawler bbcCrawler = new BBCCrawler(driver, wait);
+            bbcCrawler.crawl(csvWriter, seenUrls);
 
                 //GlobalCrawler globalCrawler = new GlobalCrawler(driver, wait);
                 //globalCrawler.crawl(csvWriter, seenUrls);
 
-                GuardianCrawler guardianCrawler = new GuardianCrawler(driver, wait, js);
-                guardianCrawler.crawl(csvWriter, seenUrls);
+                // GuardianCrawler guardianCrawler = new GuardianCrawler(driver, wait, js);
+                // guardianCrawler.crawl(csvWriter, seenUrls);
 
                 // CBCCrawler cbcCrawler = new CBCCrawler(driver, wait, js);
                 // cbcCrawler.crawl(csvWriter, seenUrls);

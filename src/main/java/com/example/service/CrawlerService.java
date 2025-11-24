@@ -4,65 +4,99 @@ import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.openqa.selenium.JavascriptExecutor;
+import javax.annotation.PostConstruct;
+
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.example.crawler.BBCCrawler;
-import com.example.crawler.CBCCrawler;
-import com.example.crawler.GlobalCrawler;
-import com.example.crawler.GuardianCrawler;
-import com.example.crawler.NYTimesCrawler;
 import com.example.utils.DriverManager;
 
 @Service
 public class CrawlerService {
 
-    private static final String OUTPUT_CSV = "all_news_data.csv";
+    private static final String OUTPUT_CSV = "bbc_news_data.csv";
     private static final boolean USE_REMOTE_DRIVER = true;
-    private static final String REMOTE_DRIVER_URL = "http://localhost:4444";
     private static final String LOCAL_CHROME_DRIVER_PATH = "C:\\Users\\hp\\Downloads\\chromedriver-win64\\chromedriver.exe";
 
-    @Scheduled(fixedRate = 21600000) // every 6 hour
-    public void runCrawlers() {
+    private static String getRemoteDriverUrl() {
+        String host = System.getenv("SELENIUM_HOST");
+        if (host == null || host.isEmpty()) host = "localhost";
+        String port = System.getenv("SELENIUM_PORT");
+        if (port == null || port.isEmpty()) port = "4444";
+        return "http://" + host + ":" + port;
+    }
+
+    /**
+     * Crawl only BBC news and save the results to the database.
+     * Runs on application startup and then every 3 hours.
+     */
+    @PostConstruct
+    @Scheduled(fixedRate = 10800000) // Run every 3 hours (3 * 60 * 60 * 1000 ms)
+    public void crawlBBCAndSaveToDB() {
         WebDriver driver = null;
         CSVWriter csvWriter = null;
-
+        
+        System.out.println("\n========================================");
+        System.out.println("⏰ BBC NEWS CRAWLER TRIGGERED");
+        System.out.println("Time: " + java.time.LocalDateTime.now());
+        System.out.println("========================================");
+        
         try {
-            driver = DriverManager.initializeDriver(USE_REMOTE_DRIVER, REMOTE_DRIVER_URL, LOCAL_CHROME_DRIVER_PATH);
+            System.out.println("🔧 Initializing Selenium WebDriver...");
+            System.out.println("   - Using remote driver: " + USE_REMOTE_DRIVER);
+            System.out.println("   - Remote URL: " + getRemoteDriverUrl());
+            
+            driver = DriverManager.initializeDriver(USE_REMOTE_DRIVER, getRemoteDriverUrl(), LOCAL_CHROME_DRIVER_PATH);
+            System.out.println("✅ Selenium WebDriver initialized successfully");
+            
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
-            JavascriptExecutor js = (JavascriptExecutor) driver;
 
+            System.out.println("📄 Initializing CSV writer: " + OUTPUT_CSV);
             csvWriter = new CSVWriter(OUTPUT_CSV);
             Set<String> seenUrls = new HashSet<>();
 
-            System.out.println("========================================");
-            System.out.println("Starting Scheduled Crawlers");
-            System.out.println("========================================");
-
-            // Run all crawlers
+            System.out.println("🌐 Starting BBC news crawl...");
             new BBCCrawler(driver, wait).crawl(csvWriter, seenUrls);
-            new GlobalCrawler(driver, wait).crawl(csvWriter, seenUrls);
-            new GuardianCrawler(driver, wait, js).crawl(csvWriter, seenUrls);
-            new CBCCrawler(driver, wait, js).crawl(csvWriter, seenUrls);
-            new NYTimesCrawler(driver, wait, js).crawl(csvWriter, seenUrls);
 
-            System.out.println("✅ Crawlers Completed");
-            System.out.println("Output saved to: " + OUTPUT_CSV);
+            System.out.println("✅ BBC News crawl completed");
+            System.out.println("📊 Total articles collected: " + seenUrls.size());
+            System.out.println("💾 Output saved to: " + OUTPUT_CSV);
 
-            // Upload new CSV rows to MongoDB
+            // Upload CSV data to MongoDB
+            System.out.println("📤 Uploading data to MongoDB...");
+            // FIX: Pass seenUrls (populated from crawl) instead of empty HashSet
             CSVtoMongoUploader.uploadCSV(OUTPUT_CSV, seenUrls);
-            System.out.println("✅ New CSV data uploaded to MongoDB successfully!");
-            System.out.println("========================================");
+            System.out.println("✅ BBC news data uploaded to MongoDB successfully!");
+            System.out.println("========================================\n");
 
         } catch (Exception e) {
-            System.err.println("Error during scheduled crawling: " + e.getMessage());
+            System.err.println("\n❌ ERROR DURING BBC CRAWLING:");
+            System.err.println("Error type: " + e.getClass().getName());
+            System.err.println("Error message: " + e.getMessage());
+            System.err.println("Stack trace:");
             e.printStackTrace();
+            System.err.println("========================================\n");
         } finally {
-            if (csvWriter != null) csvWriter.close();
-            if (driver != null) driver.quit();
+            try {
+                if (csvWriter != null) {
+                    csvWriter.close();
+                    System.out.println("📄 CSV writer closed");
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ Error closing CSV writer: " + e.getMessage());
+            }
+            
+            try {
+                if (driver != null) {
+                    driver.quit();
+                    System.out.println("🌐 WebDriver closed");
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ Error closing WebDriver: " + e.getMessage());
+            }
         }
     }
 }
