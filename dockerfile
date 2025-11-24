@@ -8,43 +8,19 @@
 # CMD ["java","-cp", "target/selenium-docker-crawl-java-1.0-SNAPSHOT-jar-with-dependencies.jar", "com.example.Main"]
 #CMD ["java", "-jar", "target/*.jar"]
 
-#FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:17-jdk
 
-#RUN apt-get update && apt-get install -y maven
-
-#WORKDIR /app
-#COPY . .
-
-#RUN mvn -version
-#RUN mvn clean package -DskipTests || true
-
-# Print target folder so we can see if jar exists
-#RUN ls -R .
-
-#CMD ["sh", "-c", "ls target && java -jar target/*.jar"]
-
-# Use the Eclipse Temurin base image with JDK 17
-FROM eclipse-temurin:21-jdk
-
-
-# Install Maven
 RUN apt-get update && apt-get install -y maven
 
-# Set the working directory inside the container
 WORKDIR /app
-
-# Copy all the project files into the container
 COPY . .
 
-# Verify Maven is installed and check the version
 RUN mvn -version
+RUN mvn clean package -DskipTests || true
 
-# Build the Spring Boot application, skipping tests
-RUN mvn clean package -DskipTests
+Print target folder so we can see if jar exists
+RUN ls -R .
 
-# Check the contents of the target directory to ensure the .jar file is built
-RUN ls -l target/
+CMD ["sh", "-c", "ls target && java -jar target/*.jar"]
 
-# Set the entrypoint to run the application
-CMD ["java", "-jar", "target/news-aggregator-1.0-SNAPSHOT.jar"]
 
