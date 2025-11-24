@@ -17,7 +17,7 @@ public class RankedArticlesService {
     private NewsService newsService;
 
     public List<News> getRankedNews() {
-        List<News> allNews = newsService.getAllNews();
+        List<News> allNews = newsService.getAllNews(1, Integer.MAX_VALUE, "", "all");
 
         if (allNews != null) {
 

@@ -15,7 +15,7 @@ public class PatternDetectionService {
     private NewsService newsService;
 
     public List<News> detectPattern(String regex) {
-        List<News> allNews = newsService.getAllNews();
+        List<News> allNews = newsService.getAllNews(1, Integer.MAX_VALUE, "", "all");
         List<News> matchedNews = new ArrayList<>();
 
         try {

@@ -23,7 +23,8 @@ public class AutoCompleteService {
             prefix = prefix.toLowerCase();
 
             // Load news
-            List<News> allNews = newsService.getAllNews();
+            // Load news (fetch a reasonable amount for suggestions, e.g., 1000)
+            List<News> allNews = newsService.getAllNews(1, 1000, "", "all");
             if (allNews == null || allNews.isEmpty()) {
                 System.out.println("No news available!");
                 return Collections.emptyList();
