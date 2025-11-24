@@ -8,7 +8,10 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+import io.github.cdimascio.dotenv.Dotenv;
+
 public class MongoDBConnection {
+
     private static MongoClient mongoClient;
     private static MongoDatabase database;
 
@@ -23,7 +26,7 @@ public class MongoDBConnection {
 
                 // 2️⃣ Try MONGO_URI environment variable
                 if (mongoUri == null || mongoUri.isEmpty()) {
-                    mongoUri = System.getenv("MONGO_URI");
+                    mongoUri = dotenv.get("MONGO_URI");
                 }
 
                 // 3️⃣ Try loading from .env if no system variables were found

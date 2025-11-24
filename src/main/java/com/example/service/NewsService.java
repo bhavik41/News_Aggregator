@@ -1,7 +1,10 @@
 package com.example.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.bson.Document;
 import org.springframework.stereotype.Service;
@@ -12,12 +15,23 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 
-@Service  // <-- This registers the class as a Spring bean
+@Service
 public class NewsService {
 
     public List<News> getAllNews() {
         MongoDatabase db = MongoDBConnection.getDatabase();
         MongoCollection<Document> collection = db.getCollection("articles");
+
+        // Allowed categories (case-insensitive)
+        Set<String> allowedCategories = new HashSet<>(Arrays.asList(
+            "Top stories",
+            "Trending",
+            "Politics",
+            "World",
+            "Technology",
+            "News" // include current documents
+        ));
+
         List<News> newsList = new ArrayList<>();
 
         try (MongoCursor<Document> cursor = collection.find().iterator()) {
@@ -25,22 +39,42 @@ public class NewsService {
                 Document doc = cursor.next();
                 News news = new News();
 
-                news.setId(doc.getObjectId("_id").toHexString());
-                news.setTitle(doc.getString("Headline"));
-                news.setSource(doc.getString("Source"));
-                news.setLink(doc.getString("Link"));
-                news.setDate(doc.getString("Time"));
-                news.setSection(doc.getString("Section"));
-                news.setImageLink(doc.getString("ImageLink"));
-                news.setDescription(doc.getString("Description"));
-                news.setCategory(doc.getString("Category"));
+                // Clean all string fields
+                String id = doc.getObjectId("_id").toHexString();
+                String title = trimQuotes(doc.getString("Headline"));
+                String source = trimQuotes(doc.getString("Source"));
+                String link = trimQuotes(doc.getString("Link"));
+                String date = trimQuotes(doc.getString("Time"));
+                String section = trimQuotes(doc.getString("Section"));
+                String imageLink = trimQuotes(doc.getString("ImageLink"));
+                String description = trimQuotes(doc.getString("Description"));
+                String category = trimQuotes(doc.getString("Category"));
 
-                newsList.add(news);
+                // Only add if category matches allowed categories (case-insensitive)
+                if (category != null && allowedCategories.stream().anyMatch(c -> c.equalsIgnoreCase(category))) {
+                    news.setId(id);
+                    news.setTitle(title);
+                    news.setSource(source);
+                    news.setLink(link);
+                    news.setDate(date);
+                    news.setSection(section);
+                    news.setImageLink(imageLink);
+                    news.setDescription(description);
+                    news.setCategory(category);
+
+                    newsList.add(news);
+                }
             }
         } catch (Exception e) {
-            e.printStackTrace();  // Optional: log errors properly in production
+            e.printStackTrace();
         }
 
         return newsList;
+    }
+
+    // Helper: remove starting/ending quotes and trim whitespace
+    private String trimQuotes(String value) {
+        if (value == null) return null;
+        return value.replaceAll("^\"|\"$", "").trim();
     }
 }
