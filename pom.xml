@@ -15,7 +15,7 @@
   <description>Java-based News Aggregator with MongoDB and REST API</description>
 
   <properties>
-    <java.version>21</java.version>
+    <java.version>17</java.version>
     <spring.boot.version>3.3.0</spring.boot.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
