@@ -24,7 +24,8 @@
 #CMD ["sh", "-c", "ls target && java -jar target/*.jar"]
 
 # Use the Eclipse Temurin base image with JDK 17
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:21-jdk
+
 
 # Install Maven
 RUN apt-get update && apt-get install -y maven
