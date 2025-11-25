@@ -13,7 +13,6 @@ public class SpellCheckController {
     @Autowired
     private SpellCheckService spellCheckService;
 
-    // POST: /api/spellcheck
     @PostMapping
     public Map<String, Object> checkSpelling(@RequestBody Map<String, String> body) {
         String text = body.get("text");
