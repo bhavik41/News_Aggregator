@@ -15,7 +15,8 @@ public class MongoDBConnection {
     private static MongoClient mongoClient;
     private static MongoDatabase database;
 
-    // Load .env variables (NOT loaded here in order to avoid side-effects in production)
+    // Load .env variables
+  //  private static final Dotenv dotenv = Dotenv.load();   // <-- REQUIRED
 
     public static MongoDatabase getDatabase() {
         if (database == null) {
