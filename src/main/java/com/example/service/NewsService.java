@@ -21,7 +21,6 @@ public class NewsService {
         try {
             db = MongoDBConnection.getDatabase();
         } catch (Exception e) {
-            // Fail fast with clear message so controller can handle and return meaningful response
             throw new RuntimeException("Failed to obtain MongoDB database: " + e.getMessage(), e);
         }
         MongoCollection<Document> collection = db.getCollection("articles");
@@ -32,20 +31,29 @@ public class NewsService {
         Document query = new Document();
         
         // Add section filter if not "all"
-        if (sectionFilter != null && !sectionFilter.equals("all") && !sectionFilter.isEmpty()) {
-            query.append("Section", sectionFilter);
+        if (sectionFilter != null && !sectionFilter.trim().isEmpty() && !sectionFilter.equals("all")) {
+            System.out.println("DEBUG: Adding section filter: " + sectionFilter);
+            query.append("Section", sectionFilter.trim());
         }
 
         // Add search filter (regex search on Headline field)
-        if (search != null && !search.isEmpty()) {
-            query.append("Headline", new Document("$regex", search).append("$options", "i"));
+        if (search != null && !search.trim().isEmpty()) {
+            System.out.println("DEBUG: Adding search filter: " + search);
+            query.append("Headline", new Document("$regex", search.trim()).append("$options", "i"));
         }
 
         // Calculate skip value for pagination
         int skip = (page - 1) * limit;
 
-        System.out.println("DEBUG: Query filter: " + query.toJson());
-        System.out.println("DEBUG: Page: " + page + ", Limit: " + limit + ", Skip: " + skip);
+        System.out.println("===== NEWS SERVICE DEBUG =====");
+        System.out.println("Query filter: " + query.toJson());
+        System.out.println("Page: " + page + ", Limit: " + limit + ", Skip: " + skip);
+        System.out.println("Section filter: '" + sectionFilter + "'");
+        System.out.println("Search term: '" + search + "'");
+
+        // Count total matching documents (for debugging)
+        long totalCount = collection.countDocuments(query);
+        System.out.println("Total matching documents in DB: " + totalCount);
 
         try (MongoCursor<Document> cursor = collection.find(query).skip(skip).limit(limit).iterator()) {
 
@@ -75,10 +83,16 @@ public class NewsService {
             }
 
         } catch (Exception e) {
+            System.err.println("ERROR: Exception while fetching news: " + e.getMessage());
             e.printStackTrace();
         }
 
-        System.out.println("DEBUG: Returned " + newsList.size() + " items");
+        System.out.println("Returned " + newsList.size() + " items from page " + page);
+        if (newsList.size() > 0) {
+            System.out.println("Sample item - Section: " + newsList.get(0).getSection() + ", Title: " + newsList.get(0).getTitle());
+        }
+        System.out.println("==============================");
+        
         return newsList;
     }
 
