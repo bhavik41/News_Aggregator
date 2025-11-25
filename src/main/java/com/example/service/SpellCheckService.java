@@ -25,7 +25,7 @@ public class SpellCheckService {
             // Remove punctuation and split
             String cleanedText = inputText
                     .toLowerCase()
-                    .replaceAll("[^a-zA-Z\\s]", " ")   // remove punctuation
+                    .replaceAll("[^a-zA-Z\\s]", " ")
                     .trim();
 
             String[] words = cleanedText.split("\\s+");

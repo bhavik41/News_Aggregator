@@ -7,19 +7,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/spell-checker")
+@RequestMapping("/api/spellcheck")
 public class SpellCheckController {
 
     @Autowired
     private SpellCheckService spellCheckService;
 
-    @PostMapping("/spellcheck")
-    public Map<String, Object> checkSpelling(@RequestBody String text) {
+    // POST: /api/spellcheck
+    @PostMapping
+    public Map<String, Object> checkSpelling(@RequestBody Map<String, String> body) {
+        String text = body.get("text");
         return spellCheckService.checkSpelling(text);
-    }
-
-    @GetMapping("/spellcheck/test")
-    public Map<String, String> testSpellCheck() {
-        return Map.of("status", "success", "message", "SpellCheck API is working!");
     }
 }
