@@ -1,7 +1,6 @@
 package com.example.service;
 
 import java.util.*;
-
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,17 +16,22 @@ public class SpellCheckService {
         List<String> wrongWords = new ArrayList<>();
 
         try {
-
             if (inputText == null || inputText.trim().isEmpty()) {
                 result.put("status", "error");
                 result.put("message", "Input text cannot be empty");
                 return result;
             }
 
-            String[] words = inputText.toLowerCase().split("\\s+");
+            // Remove punctuation and split
+            String cleanedText = inputText
+                    .toLowerCase()
+                    .replaceAll("[^a-zA-Z\\s]", " ")   // remove punctuation
+                    .trim();
+
+            String[] words = cleanedText.split("\\s+");
 
             for (String word : words) {
-                if (!DICTIONARY.contains(word)) {
+                if (!word.isEmpty() && !DICTIONARY.contains(word)) {
                     wrongWords.add(word);
                 }
             }
