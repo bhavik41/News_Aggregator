@@ -3,46 +3,34 @@ package com.example.db;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
-import io.github.cdimascio.dotenv.Dotenv;   // <-- REQUIRED
+// dotenv intentionally not loaded in production to avoid runtime issues
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import io.github.cdimascio.dotenv.Dotenv;
+
 
 public class MongoDBConnection {
 
     private static MongoClient mongoClient;
     private static MongoDatabase database;
 
-    // Load .env variables
-    private static final Dotenv dotenv = Dotenv.load();   // <-- REQUIRED
+    // Load .env variables (NOT loaded here in order to avoid side-effects in production)
 
     public static MongoDatabase getDatabase() {
         if (database == null) {
             try {
-                // 1️⃣ Try system environment variable first (VS Code / OS-level)
+                // 1️⃣ Try system environment variables (common names)
                 String mongoUri = System.getenv("MONGODB_URI");
 
-                // 2️⃣ Try MONGO_URI environment variable
+                // 2️⃣ Try alternate environment variable name
                 if (mongoUri == null || mongoUri.isEmpty()) {
-                    mongoUri = dotenv.get("MONGO_URI");
+                    mongoUri = System.getenv("MONGO_URI");
                 }
 
-                // 3️⃣ Try loading from .env if no system variables were found
+                // 3️⃣ Try Spring property environment variable
                 if (mongoUri == null || mongoUri.isEmpty()) {
-                    mongoUri = dotenv.get("MONGODB_URI");
-                }
-
-                // 4️⃣ Final checks: try additional env keys and application.properties
-                if (mongoUri == null || mongoUri.isEmpty()) {
-                    // try SPRING_DATA_MONGODB_URI as an env var
                     mongoUri = System.getenv("SPRING_DATA_MONGODB_URI");
-                }
-
-                if (mongoUri == null || mongoUri.isEmpty()) {
-                    // try dotenv (.env)
-                    mongoUri = dotenv.get("MONGODB_URI");
                 }
 
                 if (mongoUri == null || mongoUri.isEmpty()) {
