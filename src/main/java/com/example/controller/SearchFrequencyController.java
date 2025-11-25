@@ -1,18 +1,12 @@
 package com.example.controller;
 
+import com.example.service.SearchFrequencyService;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.Map;
 
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.example.service.SearchFrequencyService;
-
-import jakarta.servlet.http.HttpServletRequest;
-
 @RestController
-@RequestMapping("/api/search-frequency")
+@RequestMapping("/api/search")
 public class SearchFrequencyController {
 
     private final SearchFrequencyService searchFrequencyService;
@@ -21,12 +15,20 @@ public class SearchFrequencyController {
         this.searchFrequencyService = searchFrequencyService;
     }
 
-    @GetMapping
-    public Map<String, Object> getSearchFrequency(HttpServletRequest request) {
+    // POST: record a search keyword
+    @PostMapping("/record")
+    public Map<String, Object> recordSearch(@RequestBody Map<String, String> payload) {
+        String keyword = payload.get("keyword"); // get keyword from request body
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return Map.of("status", "error", "message", "Keyword is empty");
+        }
+        searchFrequencyService.recordSearch(keyword);
+        return Map.of("status", "success", "keyword", keyword);
+    }
 
-        // fetch keyword manually (no reflection needed)
-        String keyword = request.getParameter("keyword");
-
-        return searchFrequencyService.getFrequency(keyword);
+    // GET: top 10 searched keywords
+    @GetMapping("/top")
+    public Map<String, Object> getTopWords() {
+        return searchFrequencyService.getFrequency(null);
     }
 }
