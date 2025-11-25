@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.service.TextAnalysisService;
 
 @RestController
-@RequestMapping("/api/frequency") // base path for this API
+@RequestMapping("/api/word-frequency") // base path for this API
 @CrossOrigin("*")
 public class TextAnalysisController {
 
