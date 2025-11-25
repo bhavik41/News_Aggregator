@@ -11,7 +11,6 @@ import com.example.service.HomeService;
 
 @RestController
 @RequestMapping("/api/home")
-@CrossOrigin("*")
 public class HomeController {
 
     @Autowired

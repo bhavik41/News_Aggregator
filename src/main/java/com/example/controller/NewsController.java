@@ -11,7 +11,6 @@ import com.example.service.NewsService;
 
 @RestController
 @RequestMapping("/api/news")
-@CrossOrigin("*")
 public class NewsController {
 
     @Autowired
