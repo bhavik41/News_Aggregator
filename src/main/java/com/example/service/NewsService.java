@@ -28,39 +28,32 @@ public class NewsService {
 
         List<News> newsList = new ArrayList<>();
 
-        int skip = (page - 1) * limit;  
-        int added = 0;
+        // Build query filter
+        Document query = new Document();
+        
+        // Add section filter if not "all"
+        if (sectionFilter != null && !sectionFilter.equals("all") && !sectionFilter.isEmpty()) {
+            query.append("Section", sectionFilter);
+        }
 
-        try (MongoCursor<Document> cursor = collection.find().iterator()) {
+        // Add search filter (regex search on Headline field)
+        if (search != null && !search.isEmpty()) {
+            query.append("Headline", new Document("$regex", search).append("$options", "i"));
+        }
+
+        // Calculate skip value for pagination
+        int skip = (page - 1) * limit;
+
+        System.out.println("DEBUG: Query filter: " + query.toJson());
+        System.out.println("DEBUG: Page: " + page + ", Limit: " + limit + ", Skip: " + skip);
+
+        try (MongoCursor<Document> cursor = collection.find(query).skip(skip).limit(limit).iterator()) {
 
             while (cursor.hasNext()) {
                 Document doc = cursor.next();
 
                 String section = trimQuotes(safeGetString(doc, "Section"));
                 String title = trimQuotes(safeGetString(doc, "Headline"));
-
-                // SECTION FILTER
-                if (!sectionFilter.equals("all") && section != null) {
-                    if (!section.equalsIgnoreCase(sectionFilter)) {
-                        continue;
-                    }
-                }
-
-                // SEARCH FILTER (matches title only)
-                if (!search.isEmpty()) {
-                    if (title == null || !title.toLowerCase().contains(search.toLowerCase())) {
-                        continue;
-                    }
-                }
-
-                // skip items before this page
-                if (skip > 0) {
-                    skip--;
-                    continue;
-                }
-
-                // stop after limit reached
-                if (added >= limit) break;
 
                 News news = new News();
 
@@ -76,16 +69,16 @@ public class NewsService {
                 news.setSection(section);
                 news.setImageLink(trimQuotes(safeGetString(doc, "ImageLink")));
                 news.setDescription(trimQuotes(safeGetString(doc, "Description")));
-                news.setCategory(trimQuotes(safeGetString(doc, "Category"))); // you can remove if not needed
+                news.setCategory(trimQuotes(safeGetString(doc, "Category")));
 
                 newsList.add(news);
-                added++;
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        System.out.println("DEBUG: Returned " + newsList.size() + " items");
         return newsList;
     }
 
