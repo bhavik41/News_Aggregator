@@ -1,12 +1,20 @@
 package com.example.service;
 
-import com.example.db.MongoDBConnection;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.bson.Document;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import com.example.db.MongoDBConnection;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
 
 @Service
 public class SpellCheckService {
@@ -14,18 +22,37 @@ public class SpellCheckService {
     private final Set<String> dictionaryWords = new HashSet<>();
 
     public SpellCheckService() {
-        MongoDatabase database = MongoDBConnection.getDatabase();
-        MongoCollection<Document> wordsCollection = database.getCollection("words");
+        try {
+            MongoDatabase database = MongoDBConnection.getDatabase();
+            MongoCollection<Document> articlesCollection = database.getCollection("articles");
 
-        // Load all words from MongoDB into memory
-        for (Document doc : wordsCollection.find()) {
-            String word = doc.getString("word");
-            if (word != null && !word.isEmpty()) {
-                dictionaryWords.add(word.toLowerCase());
+            // Load words from Headline and Description fields
+            try (MongoCursor<Document> cursor = articlesCollection.find().iterator()) {
+                while (cursor.hasNext()) {
+                    Document doc = cursor.next();
+                    String headline = doc.getString("Headline");
+                    String description = doc.getString("Description");
+
+                    if (headline != null) addWordsToDictionary(headline);
+                    if (description != null) addWordsToDictionary(description);
+                }
+            }
+
+            System.out.println("✅ Loaded " + dictionaryWords.size() + " unique words from news articles");
+
+        } catch (Exception e) {
+            System.err.println("❌ Error loading words from MongoDB: " + e.getMessage());
+        }
+    }
+
+    private void addWordsToDictionary(String text) {
+        // Lowercase and remove non-alphabetic characters
+        String[] words = text.toLowerCase().replaceAll("[^a-zA-Z\\s]", " ").split("\\s+");
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                dictionaryWords.add(word);
             }
         }
-
-        System.out.println("✅ Loaded " + dictionaryWords.size() + " words from MongoDB");
     }
 
     public Map<String, Object> checkSpelling(String inputText) {
@@ -43,9 +70,10 @@ public class SpellCheckService {
 
         for (String word : words) {
             if (!word.isEmpty() && !dictionaryWords.contains(word)) {
+                String suggestion = findClosestWord(word);
                 Map<String, String> wrongWord = new HashMap<>();
                 wrongWord.put("wrong_word", word);
-                wrongWord.put("suggestion", findClosestWord(word));
+                wrongWord.put("suggestion", suggestion);
                 wrongWordsWithSuggestions.add(wrongWord);
             }
         }
@@ -57,9 +85,8 @@ public class SpellCheckService {
         return result;
     }
 
-    // Find closest word from loaded dictionary
     private String findClosestWord(String word) {
-        String closestWord = word;
+        String closestWord = "";
         int minDistance = Integer.MAX_VALUE;
 
         for (String dictWord : dictionaryWords) {
@@ -70,7 +97,7 @@ public class SpellCheckService {
             }
         }
 
-        return closestWord;
+        return closestWord; // always return closest word
     }
 
     // Levenshtein distance algorithm
