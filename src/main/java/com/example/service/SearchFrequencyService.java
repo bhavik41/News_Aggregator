@@ -1,13 +1,19 @@
 package com.example.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.bson.Document;
+import org.springframework.stereotype.Service;
+
 import com.example.db.MongoDBConnection;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 @Service
 public class SearchFrequencyService {
@@ -18,61 +24,64 @@ public class SearchFrequencyService {
 
         MongoDatabase db = MongoDBConnection.getDatabase();
         if (db == null) {
-            result.put("status", "error");
-            result.put("message", "Database connection failed");
-            return result;
+            return error("Database connection failed");
         }
 
         MongoCollection<Document> collection = db.getCollection("articles");
         if (collection == null) {
-            result.put("status", "error");
-            result.put("message", "Collection 'articles' not found");
-            return result;
+            return error("Collection 'articles' not found");
         }
 
         try {
-            // CASE 1: No keyword → return top 10 words
+            // If keyword is empty → return top words
             if (keyword == null || keyword.trim().isEmpty()) {
                 return getTopWords(collection);
             }
 
-            // CASE 2: Count keyword occurrences
+            // If keyword provided → return keyword count
             return getKeywordCount(collection, keyword.trim().toLowerCase());
 
         } catch (Exception e) {
-            result.put("status", "error");
-            result.put("message", e.getMessage());
-            return result;
+            return error(e.getMessage());
         }
     }
 
-    // --------- TOP WORD CALCULATION ----------
+    // ---------- ERROR HANDLER ----------
+    private Map<String, Object> error(String msg) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("status", "error");
+        map.put("message", msg);
+        return map;
+    }
+
+    // ---------- TOP WORDS ----------
     private Map<String, Object> getTopWords(MongoCollection<Document> collection) {
 
         Map<String, Integer> wordCount = new HashMap<>();
         Map<String, Object> result = new LinkedHashMap<>();
 
         try (MongoCursor<Document> cursor = collection.find().iterator()) {
+
             while (cursor.hasNext()) {
                 Document doc = cursor.next();
 
-                String title = doc.getString("Headline");
-                String desc = doc.getString("Description");
-
-                if (title == null) title = "";
-                if (desc == null) desc = "";
+                String title = Optional.ofNullable(doc.getString("Headline")).orElse("");
+                String desc = Optional.ofNullable(doc.getString("Description")).orElse("");
 
                 String combined = (title + " " + desc).toLowerCase();
-                String[] words = combined.split("\\W+");
+
+                // Extract words (only alphabets)
+                String[] words = combined.split("[^a-zA-Z]+");
 
                 for (String w : words) {
-                    if (w.length() > 2) {
+                    if (w.length() > 2) {  // ignore small words
                         wordCount.put(w, wordCount.getOrDefault(w, 0) + 1);
                     }
                 }
             }
         }
 
+        // Sort by highest frequency
         List<Map.Entry<String, Integer>> sorted = new ArrayList<>(wordCount.entrySet());
         sorted.sort((a, b) -> b.getValue() - a.getValue());
 
@@ -91,25 +100,30 @@ public class SearchFrequencyService {
         return result;
     }
 
-    // --------- KEYWORD COUNT ----------
+    // ---------- KEYWORD OCCURRENCE COUNT ----------
     private Map<String, Object> getKeywordCount(MongoCollection<Document> collection, String keyword) {
 
-        Map<String, Object> result = new LinkedHashMap<>();
         int count = 0;
+        Map<String, Object> result = new LinkedHashMap<>();
 
         try (MongoCursor<Document> cursor = collection.find().iterator()) {
+
             while (cursor.hasNext()) {
                 Document doc = cursor.next();
 
-                String title = doc.getString("Headline");
-                String desc = doc.getString("Description");
-
-                if (title == null) title = "";
-                if (desc == null) desc = "";
+                String title = Optional.ofNullable(doc.getString("Headline")).orElse("");
+                String desc = Optional.ofNullable(doc.getString("Description")).orElse("");
 
                 String combined = (title + " " + desc).toLowerCase();
 
-                count += countOccurrences(combined, keyword);
+                // Whole-word split, more accurate
+                String[] words = combined.split("[^a-zA-Z]+");
+
+                for (String w : words) {
+                    if (w.equals(keyword)) {
+                        count++;
+                    }
+                }
             }
         }
 
@@ -117,15 +131,5 @@ public class SearchFrequencyService {
         result.put("keyword", keyword);
         result.put("count", count);
         return result;
-    }
-
-    // helper to count keyword
-    private int countOccurrences(String text, String keyword) {
-        int count = 0, pos = 0;
-        while ((pos = text.indexOf(keyword, pos)) != -1) {
-            count++;
-            pos += keyword.length();
-        }
-        return count;
     }
 }

@@ -1,13 +1,18 @@
 package com.example.controller;
 
-import com.example.service.SearchFrequencyService;
-import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletRequest;
-
 import java.util.Map;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.service.SearchFrequencyService;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
-@RequestMapping("/api/frequency")
+@RequestMapping("/api/search-frequency")
 @CrossOrigin("*")
 public class SearchFrequencyController {
 
