@@ -2,6 +2,7 @@ package com.example.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.bson.Document;
 import org.springframework.stereotype.Service;
@@ -30,10 +31,13 @@ public class NewsService {
         // Build query filter
         Document query = new Document();
         
-        // Add section filter if not "all"
+        // Add section filter if not "all" - WITH CASE-INSENSITIVE MATCHING
         if (sectionFilter != null && !sectionFilter.trim().isEmpty() && !sectionFilter.equals("all")) {
             System.out.println("DEBUG: Adding section filter: " + sectionFilter);
-            query.append("Section", sectionFilter.trim());
+            
+            // Use case-insensitive regex for section matching
+            String sectionPattern = "^" + Pattern.quote(sectionFilter.trim()) + "$";
+            query.append("Section", new Document("$regex", sectionPattern).append("$options", "i"));
         }
 
         // Add search filter (regex search on Headline field)
@@ -55,6 +59,10 @@ public class NewsService {
         long totalCount = collection.countDocuments(query);
         System.out.println("Total matching documents in DB: " + totalCount);
 
+        // MongoDB query execution order:
+        // 1. Apply filter (query) - filters by section and search FIRST
+        // 2. Apply skip - skips documents for pagination
+        // 3. Apply limit - returns only 'limit' number of documents
         try (MongoCursor<Document> cursor = collection.find(query).skip(skip).limit(limit).iterator()) {
 
             while (cursor.hasNext()) {

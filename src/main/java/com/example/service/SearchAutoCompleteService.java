@@ -2,9 +2,12 @@ package com.example.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.bson.Document;
 import org.springframework.stereotype.Service;
@@ -26,29 +29,20 @@ public class SearchAutoCompleteService {
         this.newsService = newsService;
     }
 
-    /**
-     * Main API function:
-     * 1️⃣ Increment search frequency for the term
-     * 2️⃣ Return autocomplete suggestions based on prefix
-     */
-    public List<String> searchAndSuggest(String term, int suggestionLimit) {
+    public List<Map<String, Object>> getSuggestions(String term, int suggestionLimit) {
         if (term == null || term.trim().isEmpty()) {
             return Collections.emptyList();
         }
-
         term = term.toLowerCase();
-
-        // 1️⃣ Increment search frequency in MongoDB
-        incrementSearchFrequency(term);
-
-        // 2️⃣ Generate autocomplete suggestions
-        return getSuggestions(term, suggestionLimit);
+        return getSuggestionsWithFrequency(term, suggestionLimit);
     }
 
-    /**
-     * Increment the search frequency for a term
-     */
-    private void incrementSearchFrequency(String term) {
+    public void incrementSearchFrequency(String term) {
+        if (term == null || term.trim().isEmpty()) {
+            return;
+        }
+        term = term.toLowerCase();
+
         try {
             MongoDatabase db = MongoDBConnection.getDatabase();
             MongoCollection<Document> collection = db.getCollection("search_frequency");
@@ -58,19 +52,18 @@ public class SearchAutoCompleteService {
                 Updates.inc("count", 1),
                 new UpdateOptions().upsert(true)
             );
+            
+            System.out.println("✅ Incremented search frequency for: " + term);
         } catch (Exception e) {
             System.err.println("Error updating search frequency: " + e.getMessage());
         }
     }
 
-    /**
-     * Get autocomplete suggestions based on news titles/descriptions + search frequencies
-     */
-    private List<String> getSuggestions(String prefix, int limit) {
+    private List<Map<String, Object>> getSuggestionsWithFrequency(String prefix, int limit) {
         try {
+            Map<String, Integer> termFrequency = new HashMap<>();
             Set<String> suggestions = new HashSet<>();
 
-            // Load news
             List<News> allNews = newsService.getAllNews(1, 1000, "", "all");
             if (allNews != null) {
                 for (News news : allNews) {
@@ -79,26 +72,46 @@ public class SearchAutoCompleteService {
                     for (String word : words) {
                         if (!word.isEmpty() && word.startsWith(prefix)) {
                             suggestions.add(word);
+                            termFrequency.putIfAbsent(word, 0);
                         }
                     }
                 }
             }
 
-            // Load top search frequency terms from MongoDB
             try {
                 MongoDatabase db = MongoDBConnection.getDatabase();
                 MongoCollection<Document> freqCollection = db.getCollection("search_frequency");
 
                 freqCollection.find(Filters.regex("term", "^" + prefix))
-                        .forEach(doc -> suggestions.add(doc.getString("term")));
+                        .forEach(doc -> {
+                            String t = doc.getString("term");
+                            Integer count = doc.getInteger("count", 0);
+                            suggestions.add(t);
+                            termFrequency.put(t, count);
+                        });
             } catch (Exception e) {
                 System.err.println("Error fetching search frequencies: " + e.getMessage());
             }
 
-            List<String> sorted = new ArrayList<>(suggestions);
-            Collections.sort(sorted);
+            List<Map<String, Object>> result = suggestions.stream()
+                    .map(t -> {
+                        Map<String, Object> suggestionMap = new HashMap<>();
+                        suggestionMap.put("term", t);
+                        suggestionMap.put("frequency", termFrequency.getOrDefault(t, 0));
+                        return suggestionMap;
+                    })
+                    .sorted((a, b) -> {
+                        int freqCompare = Integer.compare(
+                            (Integer) b.get("frequency"),
+                            (Integer) a.get("frequency")
+                        );
+                        if (freqCompare != 0) return freqCompare;
+                        return ((String) a.get("term")).compareTo((String) b.get("term"));
+                    })
+                    .limit(limit)
+                    .collect(Collectors.toList());
 
-            return (sorted.size() > limit) ? sorted.subList(0, limit) : sorted;
+            return result;
 
         } catch (Exception e) {
             System.err.println("Error generating suggestions: " + e.getMessage());
@@ -106,19 +119,21 @@ public class SearchAutoCompleteService {
         }
     }
 
-    /**
-     * Optional: Get top searched terms (for analytics)
-     */
-    public List<String> getTopSearches(int limit) {
+    public List<Map<String, Object>> getTopSearches(int limit) {
         try {
             MongoDatabase db = MongoDBConnection.getDatabase();
             MongoCollection<Document> collection = db.getCollection("search_frequency");
 
-            List<String> topTerms = new ArrayList<>();
+            List<Map<String, Object>> topTerms = new ArrayList<>();
             collection.find()
                     .sort(new Document("count", -1))
                     .limit(limit)
-                    .forEach(doc -> topTerms.add(doc.getString("term")));
+                    .forEach(doc -> {
+                        Map<String, Object> termMap = new HashMap<>();
+                        termMap.put("term", doc.getString("term"));
+                        termMap.put("frequency", doc.getInteger("count", 0));
+                        topTerms.add(termMap);
+                    });
             return topTerms;
 
         } catch (Exception e) {
