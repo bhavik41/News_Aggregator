@@ -64,10 +64,10 @@ public class CSVtoMongoUploader {
                     String url = data[6]; // Link column
 
                     // Skip if already uploaded
-                    if (seenUrls.contains(url)) {
-                        skippedDuplicate++;
-                        continue;
-                    }
+                    // if (seenUrls.contains(url)) {
+                    //     skippedDuplicate++;
+                    //     continue;
+                    // }
 
                     Document doc = new Document("Source", data[0])
                             .append("Section", data[1])

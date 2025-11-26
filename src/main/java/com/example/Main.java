@@ -53,24 +53,24 @@ public class Main {
             //     GlobalCrawler globalCrawler = new GlobalCrawler(driver, wait);
             //     globalCrawler.crawl(csvWriter, seenUrls);
 
-                // GuardianCrawler guardianCrawler = new GuardianCrawler(driver, wait, js);
-                // guardianCrawler.crawl(csvWriter, seenUrls);
+            //     GuardianCrawler guardianCrawler = new GuardianCrawler(driver, wait, js);
+            //     guardianCrawler.crawl(csvWriter, seenUrls);
 
-                // CBCCrawler cbcCrawler = new CBCCrawler(driver, wait, js);
-                // cbcCrawler.crawl(csvWriter, seenUrls);
+            //     CBCCrawler cbcCrawler = new CBCCrawler(driver, wait, js);
+            //     cbcCrawler.crawl(csvWriter, seenUrls);
 
-                // NYTimesCrawler nyTimesCrawler = new NYTimesCrawler(driver, wait, js);
-                // nyTimesCrawler.crawl(csvWriter, seenUrls);
+            //     NYTimesCrawler nyTimesCrawler = new NYTimesCrawler(driver, wait, js);
+            //     nyTimesCrawler.crawl(csvWriter, seenUrls);
 
 
 
-            // System.out.println("✅ Crawlers Completed");
-            // System.out.println("Output saved to: " + OUTPUT_CSV);
+            System.out.println("✅ Crawlers Completed");
+            System.out.println("Output saved to: " + OUTPUT_CSV);
 
-            // // Upload only new CSV rows to MongoDB
-            // CSVtoMongoUploader.uploadCSV(OUTPUT_CSV, seenUrls);
-            // System.out.println("✅ New CSV data uploaded to MongoDB successfully!");
-            // System.out.println("========================================");
+            // Upload only new CSV rows to MongoDB
+            CSVtoMongoUploader.uploadCSV(OUTPUT_CSV, seenUrls);
+            System.out.println("✅ New CSV data uploaded to MongoDB successfully!");
+            System.out.println("========================================");
 
         } catch (Exception e) {
             System.err.println("Error during crawling: " + e.getMessage());
