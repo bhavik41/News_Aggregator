@@ -12,10 +12,15 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("*")     // allow all domains
-                        .allowedMethods("*")     // allow all HTTP methods
-                        .allowedHeaders("*")     // allow all headers
-                        .allowCredentials(false);
+                        .allowedOriginPatterns(
+                            "http://localhost:*",
+                            "https://newshub-66nj.onrender.com",
+                            "https://*.onrender.com"
+                        )
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
+                        .allowedHeaders("*")
+                        .allowCredentials(true)
+                        .maxAge(3600);
             }
         };
     }
