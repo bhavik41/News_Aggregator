@@ -47,20 +47,20 @@ public class Main {
             System.out.println("Starting Crawlers");
             System.out.println("========================================");
 
-            // BBCCrawler bbcCrawler = new BBCCrawler(driver, wait);
-            // bbcCrawler.crawl(csvWriter, seenUrls);
+            BBCCrawler bbcCrawler = new BBCCrawler(driver, wait);
+            bbcCrawler.crawl(csvWriter, seenUrls);
 
-            //     GlobalCrawler globalCrawler = new GlobalCrawler(driver, wait);
-            //     globalCrawler.crawl(csvWriter, seenUrls);
+                GlobalCrawler globalCrawler = new GlobalCrawler(driver, wait);
+                globalCrawler.crawl(csvWriter, seenUrls);
 
-            //     GuardianCrawler guardianCrawler = new GuardianCrawler(driver, wait, js);
-            //     guardianCrawler.crawl(csvWriter, seenUrls);
+                GuardianCrawler guardianCrawler = new GuardianCrawler(driver, wait, js);
+                guardianCrawler.crawl(csvWriter, seenUrls);
 
-            //     CBCCrawler cbcCrawler = new CBCCrawler(driver, wait, js);
-            //     cbcCrawler.crawl(csvWriter, seenUrls);
+                CBCCrawler cbcCrawler = new CBCCrawler(driver, wait, js);
+                cbcCrawler.crawl(csvWriter, seenUrls);
 
-            //     NYTimesCrawler nyTimesCrawler = new NYTimesCrawler(driver, wait, js);
-            //     nyTimesCrawler.crawl(csvWriter, seenUrls);
+                NYTimesCrawler nyTimesCrawler = new NYTimesCrawler(driver, wait, js);
+                nyTimesCrawler.crawl(csvWriter, seenUrls);
 
 
 
