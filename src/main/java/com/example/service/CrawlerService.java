@@ -35,7 +35,7 @@ public class CrawlerService {
      * Runs on application startup and then every 3 hours.
      */
     @PostConstruct
-    @Scheduled(fixedRate = 10800000) // Run every 3 hours (3 * 60 * 60 * 1000 ms)
+    // @Scheduled(fixedRate = 10800000) // Run every 3 hours (3 * 60 * 60 * 1000 ms)
     public void crawlBBCAndSaveToDB() {
         WebDriver driver = null;
         CSVWriter csvWriter = null;
